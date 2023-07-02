@@ -1,7 +1,7 @@
 {
   "name": "promptwiz",
   "version": "0.1.0",
-  "description": "Open source library for running prompts against LLMs compatible with Promptwise. `npm install promptwiz-js`",
+  "description": "Promptwiz-js is a server-side TypeScript/JavaScript library for prompting large language models (LLMs) using a shared interface compatible with the Promptwise service. `npm install promptwiz-js`",
   "main": "./build/cjs/index.bundle.js",
   "module": "./build/esm/index.js",
   "typings": "./build/esm/index.d.ts",
@@ -12,9 +12,8 @@
     }
   },
   "scripts": {
-    "build:gzip": "gzip -k -9 ./build/esm/index.bundle.min.js && wc -c ./build/esm/index.bundle.min.js.gz",
     "build:types": "yarn run tsc --project ./tsconfig.json --emitDeclarationOnly",
-    "build": "yarn clean && node ./scripts/build_lib.js && yarn build:gzip && yarn build:types",
+    "build": "yarn clean && node ./scripts/build_lib.js && yarn build:types",
     "clean": "rm -rf ./build",
     "docs": "node ./scripts/build_docs.js"
   },
@@ -38,8 +37,15 @@
     "react-dom": "^16.14.0",
     "typescript": "^4.8.4"
   },
-  "browserslist": ["> 0.5%", "last 2 versions", "Firefox ESR", "not dead"],
-  "files": ["build"],
+  "browserslist": [
+    "> 0.5%",
+    "last 2 versions",
+    "Firefox ESR",
+    "not dead"
+  ],
+  "files": [
+    "build"
+  ],
   "volta": {
     "node": "18.15.0",
     "yarn": "1.22.19"
