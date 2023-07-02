@@ -31,7 +31,7 @@ export function GettingStarted({
         package manager to install it.
       </Paragraph>
       <Paragraph>
-        <CodeBlock>npm install --save promptwiz-js</CodeBlock>
+        <CodeBlock>npm install --save @promptwise/promptwiz-js</CodeBlock>
       </Paragraph>
       <Header level={3} name="Get provider api keys" />
       <Paragraph>
