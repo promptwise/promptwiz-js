@@ -1,6 +1,6 @@
 # promptwiz-js
 [![license](https://img.shields.io/github/license/promptwise/promptwiz-js)](https://github.com/promptwise/promptwiz-js/blob/main/LICENSE)
-[![npm](https://img.shields.io/npm/v/promptwiz-js)](https://npmjs.com/package/promptwiz-js)
+[![npm](https://img.shields.io/npm/v/@promptwise/promptwiz-js)](https://npmjs.com/package/@promptwise/promptwiz-js)
 [![issues](https://img.shields.io/github/issues/promptwise/promptwiz-js)](https://github.com/promptwise/promptwiz-js/issues)
 
 Promptwiz-js is a server-side TypeScript/JavaScript library for prompting large language models (LLMs) using a shared interface compatible with the Promptwise service.
