@@ -22,7 +22,8 @@ export const runPrompt: PromptProvider = (
   const isChatPrompt = Array.isArray(prompt);
   const isChatModel = model.includes("gpt-3.5") || model.includes("gpt-4");
 
-  const requestBody = {
+  const requestBody: Record<string, any> = {
+    model,
     ...parameters,
     // stream,
   };

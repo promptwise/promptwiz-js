@@ -68,7 +68,9 @@ const runPrompt = ({ model, access_token, parameters }, prompt, signal) => {
     );
   const isChatPrompt = Array.isArray(prompt);
   const isChatModel = model.includes("gpt-3.5") || model.includes("gpt-4");
-  const requestBody = __spreadValues({}, parameters);
+  const requestBody = __spreadValues({
+    model
+  }, parameters);
   if (isChatModel) {
     requestBody.messages = isChatPrompt ? prompt : import_utils.convertTextToChatMessages;
   } else {
