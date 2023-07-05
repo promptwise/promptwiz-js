@@ -19,7 +19,7 @@ import {
   getEncodingNameForModel
 } from "js-tiktoken";
 import { template_regex } from "../utils/parseTemplateStrings";
-import { convertTextToChatMessages } from "../utils";
+import { convertChatMessagesToText, convertTextToChatMessages } from "../utils";
 import { AuthorizationError, RateLimitError, ServerError } from "../errors";
 const runPrompt = ({ model, access_token, parameters }, prompt, signal) => {
   if (!access_token)
@@ -32,9 +32,9 @@ const runPrompt = ({ model, access_token, parameters }, prompt, signal) => {
     model
   }, parameters);
   if (isChatModel) {
-    requestBody.messages = isChatPrompt ? prompt : convertTextToChatMessages;
+    requestBody.messages = isChatPrompt ? prompt : convertTextToChatMessages(prompt);
   } else {
-    requestBody.prompt = prompt;
+    requestBody.prompt = isChatPrompt ? convertChatMessagesToText(prompt) : prompt;
   }
   const body = JSON.stringify(requestBody);
   return fetch(

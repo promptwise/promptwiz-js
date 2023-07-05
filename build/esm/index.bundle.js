@@ -493,9 +493,9 @@ var runPrompt = ({ model, access_token, parameters }, prompt, signal) => {
     model
   }, parameters);
   if (isChatModel) {
-    requestBody.messages = isChatPrompt ? prompt : convertTextToChatMessages;
+    requestBody.messages = isChatPrompt ? prompt : convertTextToChatMessages(prompt);
   } else {
-    requestBody.prompt = prompt;
+    requestBody.prompt = isChatPrompt ? convertChatMessagesToText(prompt) : prompt;
   }
   const body = JSON.stringify(requestBody);
   return fetch(
