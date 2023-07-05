@@ -40,7 +40,7 @@ export function promptwiz<Inputs extends Record<string, string> | void = void>(
 
       let retries = -1;
       let delay = 2000;
-      const { max_retries = 3, parser } = config.controller;
+      const { max_retries = 3, parser } = config.controller || {};
       const ac = new AbortController();
 
       let outputs: PromptwizOutput[] = [];
