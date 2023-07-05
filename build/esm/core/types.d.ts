@@ -8,14 +8,14 @@ export type ChatPrompt = Array<{
     content: string;
 }>;
 export type Prompt = string | ChatPrompt;
-export type PromptwizConfig<Inputs extends Record<string, string> | void = void> = {
+export type PromptwizConfig = {
     provider: {
         name: "openai";
         access_token: string;
         model: string;
         parameters?: Record<string, unknown>;
     };
-    controller: {
+    controller?: {
         max_retries?: number;
         parser?: <R>(output: string) => R;
     };

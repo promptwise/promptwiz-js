@@ -702,7 +702,7 @@ function promptwiz(config) {
         const provider = providers_exports[config.provider.name];
         let retries = -1;
         let delay = 2e3;
-        const { max_retries = 3, parser } = config.controller;
+        const { max_retries = 3, parser } = config.controller || {};
         const ac = new AbortController();
         let outputs = [];
         while (++retries <= max_retries) {

@@ -9,7 +9,7 @@ import {
 import * as errors from "./errors";
 
 export function promptwiz<Inputs extends Record<string, string> | void = void>(
-  config: PromptwizConfig<Inputs>
+  config: PromptwizConfig
 ): Promptwiz<Inputs> {
   let is_running = false;
   const promptwizInstance: Promptwiz<Inputs> = {
@@ -18,7 +18,7 @@ export function promptwiz<Inputs extends Record<string, string> | void = void>(
       return is_running;
     },
 
-    config(update: Partial<PromptwizConfig<Inputs>>): Promptwiz<Inputs> {
+    config(update: Partial<PromptwizConfig>): Promptwiz<Inputs> {
       if (update.prompt) {
         config.prompt = update.prompt;
       }
