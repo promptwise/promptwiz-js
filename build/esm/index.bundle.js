@@ -680,7 +680,7 @@ function promptwiz(config) {
             prompt,
             ac.signal
           );
-          outputs = parser ? outputs.map((o) => __spreadProps(__spreadValues({}, o), { output: parser(o.output) })) : outputs;
+          outputs = parser ? outputs.map((o) => __spreadProps(__spreadValues({}, o), { output: parser(o.content) })) : outputs;
         } catch (error) {
           if (error instanceof AbortError || ac.signal.aborted) {
             is_running = false;

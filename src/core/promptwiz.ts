@@ -53,7 +53,7 @@ export function promptwiz<Inputs extends Record<string, string> | void = void>(
             ac.signal
           );
           outputs = parser
-            ? outputs.map((o) => ({ ...o, output: parser(o.output) }))
+            ? outputs.map((o) => ({ ...o, output: parser(o.content) }))
             : outputs;
         } catch (error) {
           if (error instanceof errors.AbortError || ac.signal.aborted) {

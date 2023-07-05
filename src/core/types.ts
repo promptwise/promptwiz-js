@@ -1,5 +1,5 @@
 export type PromptwizOutput = {
-  output: string;
+  content: string;
   tokens: number;
   truncated: boolean;
 };
