@@ -100,14 +100,15 @@ const runPrompt = ({ model, access_token, parameters }, prompt, signal) => {
         }
       ];
     }
+    const tokenizer = getTokenizer(model);
     return choices.map(
       isChatModel ? ({ message, finish_reason }) => ({
         content: message.content,
-        tokens: usage.completion_tokens / choices.length,
+        tokens: tokenizer.count(message.content),
         truncated: finish_reason === "length"
       }) : ({ text, finish_reason }) => ({
         content: text,
-        tokens: usage.completion_tokens / choices.length,
+        tokens: tokenizer.count(text),
         truncated: finish_reason === "length"
       })
     );

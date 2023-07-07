@@ -554,14 +554,15 @@ var runPrompt = ({ model, access_token, parameters }, prompt, signal) => {
         }
       ];
     }
+    const tokenizer = getTokenizer(model);
     return choices.map(
       isChatModel ? ({ message, finish_reason }) => ({
         content: message.content,
-        tokens: usage.completion_tokens / choices.length,
+        tokens: tokenizer.count(message.content),
         truncated: finish_reason === "length"
       }) : ({ text, finish_reason }) => ({
         content: text,
-        tokens: usage.completion_tokens / choices.length,
+        tokens: tokenizer.count(text),
         truncated: finish_reason === "length"
       })
     );
@@ -705,17 +706,18 @@ function promptwiz(config) {
         let delay = 2e3;
         const { max_retries = 3, parser } = config.controller || {};
         const ac = new AbortController();
-        let outputs = [];
         while (++retries <= max_retries) {
           try {
             if (ac.signal.aborted)
               throw new AbortError();
-            outputs = yield provider.runPrompt(
+            let outputs = yield provider.runPrompt(
               config.provider,
               prompt,
               ac.signal
             );
             outputs = parser ? outputs.map((o) => __spreadProps(__spreadValues({}, o), { output: parser(o.content) })) : outputs;
+            is_running = false;
+            return outputs;
           } catch (error) {
             if (error instanceof AbortError || ac.signal.aborted) {
               is_running = false;
@@ -732,7 +734,7 @@ function promptwiz(config) {
           }
         }
         is_running = false;
-        return outputs;
+        return [];
       });
     }
   };

@@ -94,17 +94,18 @@ function promptwiz(config) {
         let delay = 2e3;
         const { max_retries = 3, parser } = config.controller || {};
         const ac = new AbortController();
-        let outputs = [];
         while (++retries <= max_retries) {
           try {
             if (ac.signal.aborted)
               throw new errors.AbortError();
-            outputs = yield provider.runPrompt(
+            let outputs = yield provider.runPrompt(
               config.provider,
               prompt,
               ac.signal
             );
             outputs = parser ? outputs.map((o) => __spreadProps(__spreadValues({}, o), { output: parser(o.content) })) : outputs;
+            is_running = false;
+            return outputs;
           } catch (error) {
             if (error instanceof errors.AbortError || ac.signal.aborted) {
               is_running = false;
@@ -121,7 +122,7 @@ function promptwiz(config) {
           }
         }
         is_running = false;
-        return outputs;
+        return [];
       });
     }
   };

@@ -13,7 +13,6 @@ export function promptwiz<Inputs extends Record<string, string> | void = void>(
 ): Promptwiz<Inputs> {
   let is_running = false;
   const promptwizInstance: Promptwiz<Inputs> = {
-
     get is_running() {
       return is_running;
     },
@@ -43,11 +42,10 @@ export function promptwiz<Inputs extends Record<string, string> | void = void>(
       const { max_retries = 3, parser } = config.controller || {};
       const ac = new AbortController();
 
-      let outputs: PromptwizOutput[] = [];
       while (++retries <= max_retries) {
         try {
           if (ac.signal.aborted) throw new errors.AbortError();
-          outputs = await provider.runPrompt(
+          let outputs = await provider.runPrompt(
             config.provider,
             prompt,
             ac.signal
@@ -55,6 +53,8 @@ export function promptwiz<Inputs extends Record<string, string> | void = void>(
           outputs = parser
             ? outputs.map((o) => ({ ...o, output: parser(o.content) }))
             : outputs;
+          is_running = false;
+          return outputs;
         } catch (error) {
           if (error instanceof errors.AbortError || ac.signal.aborted) {
             is_running = false;
@@ -75,7 +75,7 @@ export function promptwiz<Inputs extends Record<string, string> | void = void>(
         }
       }
       is_running = false;
-      return outputs;
+      return [];
     },
     // stream(
     //   inputsOrHandler: Inputs | StreamHandler,
