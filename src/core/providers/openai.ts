@@ -66,20 +66,18 @@ export const runPrompt: PromptProvider = (
         ];
       }
 
-      const tokenizer = getTokenizer(model);
-
       return choices.map(
         isChatModel
           ? // @ts-expect-error - later
             ({ message, finish_reason }) => ({
               content: message.content,
-              tokens: tokenizer.count(message.content),
+              tokens: usage.completion_tokens / choices.length,
               truncated: finish_reason === "length",
             })
           : // @ts-expect-error - later
             ({ text, finish_reason }) => ({
               content: text,
-              tokens: tokenizer.count(text),
+              tokens: usage.completion_tokens / choices.length,
               truncated: finish_reason === "length",
             })
       );
