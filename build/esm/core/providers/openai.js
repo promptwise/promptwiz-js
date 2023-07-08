@@ -118,7 +118,7 @@ function getTokenizer(model) {
       );
       return [...tokens];
     },
-    decode: encoder.decode,
+    decode: (tokens) => encoder.decode(tokens),
     decodeTokens(tokens) {
       return decode_array(tokens);
     },

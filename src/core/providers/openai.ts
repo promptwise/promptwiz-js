@@ -152,7 +152,7 @@ export function getTokenizer(model: string) {
       );
       return [...tokens] as number[];
     },
-    decode: encoder.decode,
+    decode: (tokens: number[]) => encoder.decode(tokens),
     decodeTokens(tokens: number[]): string[] {
       return decode_array(tokens);
     },
