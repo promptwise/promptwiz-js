@@ -558,6 +558,10 @@ var _encoder_cache = null;
 function getTokenizer(model) {
   const encoding = getEncodingNameForModel(model);
   const encoder = (_encoder_cache == null ? void 0 : _encoder_cache.encoding) === encoding ? _encoder_cache.encoder : encodingForModel(model);
+  _encoder_cache = {
+    encoding,
+    encoder
+  };
   const decode_array = (tokens) => {
     var _a;
     const res = [];

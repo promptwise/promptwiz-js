@@ -127,6 +127,11 @@ export function getTokenizer(model: string) {
       ? _encoder_cache.encoder
       : encodingForModel(model as TiktokenModel);
 
+  _encoder_cache = {
+    encoding,
+    encoder,
+  };
+
   const decode_array = (tokens: number[]): string[] => {
     const res: Uint8Array[] = [];
     for (let i = 0; i < tokens.length; ++i) {

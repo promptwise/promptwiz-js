@@ -139,6 +139,10 @@ let _encoder_cache = null;
 function getTokenizer(model) {
   const encoding = (0, import_js_tiktoken.getEncodingNameForModel)(model);
   const encoder = (_encoder_cache == null ? void 0 : _encoder_cache.encoding) === encoding ? _encoder_cache.encoder : (0, import_js_tiktoken.encodingForModel)(model);
+  _encoder_cache = {
+    encoding,
+    encoder
+  };
   const decode_array = (tokens) => {
     var _a;
     const res = [];
