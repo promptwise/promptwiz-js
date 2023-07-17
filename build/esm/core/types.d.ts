@@ -1,7 +1,11 @@
-export type PromptwizOutput = {
+export type PromptOutput = {
     content: string;
     tokens: number;
     truncated: boolean;
+};
+export type PromptwizOutput = {
+    outputs: PromptOutput[];
+    original: any;
 };
 export type ChatPrompt = Array<{
     role: string;
@@ -24,15 +28,15 @@ export type PromptwizConfig = {
 export type StreamHandler = (token: string, done: boolean) => unknown;
 export type Promptwiz<Inputs extends Record<string, string> | void = void> = {
     readonly is_running: boolean;
-    run(): PromiseLike<PromptwizOutput[]>;
-    run(inputs: Inputs): PromiseLike<PromptwizOutput[]>;
+    run(): PromiseLike<PromptwizOutput>;
+    run(inputs: Inputs): PromiseLike<PromptwizOutput>;
     config(config: Partial<PromptwizConfig>): Promptwiz<Inputs>;
 };
 export type ChatMessage = {
     role: "system" | "user" | "assistant" | string;
     content: string;
 };
-export type PromptProvider = (provider: PromptwizConfig["provider"], prompt: PromptwizConfig["prompt"], signal: AbortSignal) => Promise<PromptwizOutput[]>;
+export type PromptProvider = (provider: PromptwizConfig["provider"], prompt: PromptwizConfig["prompt"], signal: AbortSignal) => Promise<PromptwizOutput>;
 export type Optional<P extends Record<string, unknown> = Record<string, unknown>, K extends string = string> = Omit<P, K> & Partial<Pick<P, K>>;
 export interface ModelTokenizer {
     encode(text: string, preserve_templates?: boolean): number[];
@@ -42,7 +46,8 @@ export interface ModelTokenizer {
     count(value: string | ChatMessage | Array<ChatMessage>, preserve_templates?: boolean): number;
 }
 export interface PromptProviderModule {
-    runPrompt(provider: PromptwizConfig["provider"], prompt: PromptwizConfig["prompt"], signal: AbortSignal): Promise<PromptwizOutput[]>;
-    getTokenizer(model: string): ModelTokenizer;
+    runPrompt(provider: PromptwizConfig["provider"], prompt: PromptwizConfig["prompt"], signal: AbortSignal): Promise<PromptwizOutput>;
+    getTokenizer(model: string, specialTokens?: Record<string, number>): ModelTokenizer;
     maxTokensForModel(model: string): number;
+    pricePerPrompt(model: string, input_tokens: number, output_tokens: number): number;
 }

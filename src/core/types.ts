@@ -1,7 +1,12 @@
-export type PromptwizOutput = {
+export type PromptOutput = {
   content: string;
   tokens: number;
   truncated: boolean;
+};
+
+export type PromptwizOutput = {
+  outputs: PromptOutput[];
+  original: any; // Original result of the provider's prompt api
 };
 
 export type ChatPrompt = Array<{ role: string; content: string }>;
@@ -25,10 +30,10 @@ export type StreamHandler = (token: string, done: boolean) => unknown;
 
 export type Promptwiz<Inputs extends Record<string, string> | void = void> = {
   readonly is_running: boolean;
-  run(): PromiseLike<PromptwizOutput[]>;
-  run(inputs: Inputs): PromiseLike<PromptwizOutput[]>;
-  // stream(handler: StreamHandler): PromiseLike<PromptwizOutput[]>;
-  // stream(inputs: Inputs, handler: StreamHandler): PromiseLike<PromptwizOutput[]>;
+  run(): PromiseLike<PromptwizOutput>;
+  run(inputs: Inputs): PromiseLike<PromptwizOutput>;
+  // stream(handler: StreamHandler): PromiseLike<PromptwizOutput>;
+  // stream(inputs: Inputs, handler: StreamHandler): PromiseLike<PromptwizOutput>;
   config(config: Partial<PromptwizConfig>): Promptwiz<Inputs>;
 };
 
@@ -41,7 +46,7 @@ export type PromptProvider = (
   provider: PromptwizConfig["provider"],
   prompt: PromptwizConfig["prompt"],
   signal: AbortSignal,
-) => Promise<PromptwizOutput[]>;
+) => Promise<PromptwizOutput>;
 
 export type Optional<
   P extends Record<string, unknown> = Record<string, unknown>,
@@ -60,13 +65,19 @@ export interface ModelTokenizer {
 }
 
 export interface PromptProviderModule {
+  // Run the prompt given the input and config
   runPrompt(
     provider: PromptwizConfig["provider"],
     prompt: PromptwizConfig["prompt"],
     signal: AbortSignal,
-  ): Promise<PromptwizOutput[]>;
+  ): Promise<PromptwizOutput>;
 
-  getTokenizer(model: string): ModelTokenizer;
+  // Get tokenizer for the model
+  getTokenizer(model: string, specialTokens?: Record<string, number>): ModelTokenizer;
 
+  // Get the max token context window size for the model
   maxTokensForModel(model: string): number;
+
+  // Get the cost in dollars of a prompt
+  pricePerPrompt(model: string, input_tokens: number, output_tokens: number): number;
 }

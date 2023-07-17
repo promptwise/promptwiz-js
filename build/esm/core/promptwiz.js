@@ -50,14 +50,16 @@ function promptwiz(config) {
         try {
           if (ac.signal.aborted)
             throw new errors.AbortError();
-          let outputs = await provider.runPrompt(
+          let { outputs, original } = await provider.runPrompt(
             config.provider,
             prompt,
             ac.signal
           );
-          outputs = parser ? outputs.map((o) => __spreadProps(__spreadValues({}, o), { output: parser(o.content) })) : outputs;
           is_running = false;
-          return outputs;
+          return {
+            outputs: parser ? outputs.map((o) => __spreadProps(__spreadValues({}, o), { output: parser(o.content) })) : outputs,
+            original
+          };
         } catch (error) {
           if (error instanceof errors.AbortError || ac.signal.aborted) {
             is_running = false;
@@ -74,7 +76,7 @@ function promptwiz(config) {
         }
       }
       is_running = false;
-      return [];
+      return { outputs: [], original: null };
     }
   };
   return promptwizInstance;

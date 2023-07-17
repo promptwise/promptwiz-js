@@ -13,7 +13,7 @@ export const runPrompt: PromptProvider = (
   { model, access_token, parameters },
   prompt,
   signal
-): Promise<PromptwizOutput[]> => {
+): Promise<PromptwizOutput> => {
   if (!access_token)
     throw new AuthorizationError(
       "Missing access_token required to use OpenAI api!"
@@ -53,36 +53,43 @@ export const runPrompt: PromptProvider = (
     }
   )
     .then((resp) => assessOpenAIResponse(resp))
-    .then(({ choices, usage }) => {
-      if (!choices.length) return []; // TODO: log here? Is this condition even really possible?
+    .then((original) => {
+      const { choices, usage } = original;
+      if (!choices.length) return { outputs: [], original }; // TODO: log here? Is this condition even really possible?
       // If only a single output then we can just piggy-back on OpenAI's token count
       if (choices.length === 1) {
-        return [
-          {
-            content: choices[0].message.content,
-            tokens: usage.completion_tokens,
-            truncated: choices[0].finish_reason === "length",
-          },
-        ];
+        return {
+          outputs: [
+            {
+              content: choices[0].message.content,
+              tokens: usage.completion_tokens,
+              truncated: choices[0].finish_reason === "length",
+            },
+          ],
+          original,
+        };
       }
 
       const tokenizer = getTokenizer(model);
 
-      return choices.map(
-        isChatModel
-          ? // @ts-expect-error - later
-            ({ message, finish_reason }) => ({
-              content: message.content,
-              tokens: tokenizer.count(message.content),
-              truncated: finish_reason === "length",
-            })
-          : // @ts-expect-error - later
-            ({ text, finish_reason }) => ({
-              content: text,
-              tokens: tokenizer.count(text),
-              truncated: finish_reason === "length",
-            })
-      );
+      return {
+        outputs: choices.map(
+          isChatModel
+            ? // @ts-expect-error - later
+              ({ message, finish_reason }) => ({
+                content: message.content,
+                tokens: tokenizer.count(message.content),
+                truncated: finish_reason === "length",
+              })
+            : // @ts-expect-error - later
+              ({ text, finish_reason }) => ({
+                content: text,
+                tokens: tokenizer.count(text),
+                truncated: finish_reason === "length",
+              })
+        ),
+        original,
+      };
     });
 
   // if (stream) {
@@ -117,19 +124,27 @@ async function assessOpenAIResponse(response: Response) {
   return responseBody;
 }
 
-let _encoder_cache: null | { encoder: Tiktoken; encoding: string } = null;
+let _encoder_cache: null | {
+  encoder: Tiktoken;
+  encoding: string;
+  specialTokens?: Record<string, number>;
+} = null;
 
-export function getTokenizer(model: string) {
+export function getTokenizer(
+  model: string,
+  specialTokens?: Record<string, number>
+) {
   // try to pull the encoder from cache if possible so we don't have to reinitialize it every call
   const encoding: string = getEncodingNameForModel(model as TiktokenModel);
   const encoder =
-    _encoder_cache?.encoding === encoding
+    _encoder_cache?.encoding === encoding && !specialTokens
       ? _encoder_cache.encoder
-      : encodingForModel(model as TiktokenModel);
+      : encodingForModel(model as TiktokenModel, specialTokens);
 
   _encoder_cache = {
     encoding,
     encoder,
+    specialTokens,
   };
 
   const decode_array = (tokens: number[]): string[] => {
@@ -184,25 +199,7 @@ export function getTokenizer(model: string) {
 
 export function maxTokensForModel(model: string): number {
   const model_windows = {
-    "text-davinci-003": 4097,
-    "text-davinci-002": 4097,
-    "text-davinci-001": 2049,
-    "text-curie-001": 2049,
-    "text-babbage-001": 2049,
-    "text-ada-001": 2049,
-    davinci: 2049,
-    curie: 2049,
-    babbage: 2049,
-    ada: 2049,
-    "code-davinci-002": 8001,
-    "code-davinci-001": 8001,
-    "code-cushman-002": 2048,
-    "code-cushman-001": 2048,
-    "davinci-codex": 2049,
-    "cushman-codex": 2049,
-    "text-davinci-edit-001": 2049,
-    "code-davinci-edit-001": 2049,
-    "text-embedding-ada-002": 2049,
+    // 1st Gen models - Shutdown: 2024-01-04
     "text-similarity-davinci-001": 2049,
     "text-similarity-curie-001": 2049,
     "text-similarity-babbage-001": 2049,
@@ -213,16 +210,84 @@ export function maxTokensForModel(model: string): number {
     "text-search-ada-doc-001": 2049,
     "code-search-babbage-code-001": 2049,
     "code-search-ada-code-001": 2049,
-    "gpt-4": 8192,
+    // Base GPT models - Shutdown: 2024-01-04
+    davinci: 2049,
+    curie: 2049,
+    babbage: 2049,
+    ada: 2049,
+    // InstructGPT models - Shutdown: 2024-01-04
+    "text-davinci-003": 4097,
+    "text-davinci-002": 4097,
+    "text-davinci-001": 2049,
+    "text-curie-001": 2049,
+    "text-babbage-001": 2049,
+    "text-ada-001": 2049,
+    // Prev gen models - Shutdown 2023-09-13
     "gpt-4-0314": 8192,
-    "gpt-4-0613": 8192,
-    "gpt-4-32k": 32768,
     "gpt-4-32k-0314": 32768,
-    "gpt-4-32k-0613": 32768,
-    "gpt-3.5-turbo": 4096,
     "gpt-3.5-turbo-0301": 4096,
-    "gpt-3.5-turbo-16k": 16384,
+    // Current model checkpoints
+    "gpt-4-0613": 8192,
+    "gpt-4-32k-0613": 32768,
     "gpt-3.5-turbo-16k-0613": 16384,
+    // Current models
+    "text-embedding-ada-002": 2049,
+    "gpt-4": 8192,
+    "gpt-4-32k": 32768,
+    "gpt-3.5-turbo": 4096,
+    "gpt-3.5-turbo-16k": 16384,
+    "gpt-3.5-turbo-instruct": 4096, // TODO: unreleased
   };
   return model_windows[model as keyof typeof model_windows] || 0;
+}
+
+export function pricePerPrompt(
+  model: string,
+  input_tokens: number,
+  output_tokens: number
+): number {
+  // ALL VALUES HERE ARE: CENTS-PER-KILOTOKENS
+  const model_costs = {
+    // 1st Gen models - Shutdown: 2024-01-04
+    "text-similarity-davinci-001": [0.2, 0.2],
+    "text-similarity-curie-001": [0.2, 0.2],
+    "text-similarity-babbage-001": [0.2, 0.2],
+    "text-similarity-ada-001": [0.2, 0.2],
+    "text-search-davinci-doc-001": [0.2, 0.2],
+    "text-search-curie-doc-001": [0.2, 0.2],
+    "text-search-babbage-doc-001": [0.2, 0.2],
+    "text-search-ada-doc-001": [0.2, 0.2],
+    "code-search-babbage-code-001": [0.2, 0.2],
+    "code-search-ada-code-001": [0.2, 0.2],
+    // Base GPT models - Shutdown: 2024-01-04
+    davinci: [2, 2],
+    curie: [0.2, 0.2],
+    babbage: [0.05, 0.05],
+    ada: [0.04, 0.04],
+    // InstructGPT models - Shutdown: 2024-01-04
+    "text-davinci-003": [2, 2],
+    "text-davinci-002": [2, 2],
+    "text-davinci-001": [2, 2],
+    "text-curie-001": [0.2, 0.2],
+    "text-babbage-001": [0.2, 0.2],
+    "text-ada-001": [0.2, 0.2],
+    // Prev gen models - Shutdown 2023-09-13
+    "gpt-4-0314": [3, 6],
+    "gpt-4-32k-0314": [6, 12],
+    "gpt-3.5-turbo-0301": [0.15, 0.2],
+    // Current model checkpoints
+    "gpt-4-0613": [3, 6],
+    "gpt-4-32k-0613": [6, 12],
+    "gpt-3.5-turbo-16k-0613": [0.3, 0.4],
+    // Current models
+    "text-embedding-ada-002": [0.2, 0.2],
+    "gpt-4": [3, 6],
+    "gpt-4-32k": [6, 12],
+    "gpt-3.5-turbo": [0.15, 0.2],
+    "gpt-3.5-turbo-16k": [0.3, 0.4],
+    "gpt-3.5-turbo-instruct": [0, 0], // TODO: unreleased
+  };
+  const cost = model_costs[model as keyof typeof model_costs] || [0, 0];
+  // Returns dollar amount
+  return (cost[0] * input_tokens + cost[1] * output_tokens) / 10;
 }

@@ -30,7 +30,7 @@ export function promptwiz<Inputs extends Record<string, string> | void = void>(
       return promptwizInstance;
     },
 
-    async run(inputs?: Inputs): Promise<PromptwizOutput[]> {
+    async run(inputs?: Inputs): Promise<PromptwizOutput> {
       is_running = true;
       const prompt = inputs
         ? hydratePromptInputs(config.prompt, inputs)
@@ -45,16 +45,18 @@ export function promptwiz<Inputs extends Record<string, string> | void = void>(
       while (++retries <= max_retries) {
         try {
           if (ac.signal.aborted) throw new errors.AbortError();
-          let outputs = await provider.runPrompt(
+          let { outputs, original } = await provider.runPrompt(
             config.provider,
             prompt,
             ac.signal
           );
-          outputs = parser
-            ? outputs.map((o) => ({ ...o, output: parser(o.content) }))
-            : outputs;
           is_running = false;
-          return outputs;
+          return {
+            outputs: parser
+              ? outputs.map((o) => ({ ...o, output: parser(o.content) }))
+              : outputs,
+            original,
+          };
         } catch (error) {
           if (error instanceof errors.AbortError || ac.signal.aborted) {
             is_running = false;
@@ -75,7 +77,7 @@ export function promptwiz<Inputs extends Record<string, string> | void = void>(
         }
       }
       is_running = false;
-      return [];
+      return { outputs: [], original: null };
     },
     // stream(
     //   inputsOrHandler: Inputs | StreamHandler,
