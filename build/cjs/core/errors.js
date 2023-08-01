@@ -21,12 +21,15 @@ __export(errors_exports, {
   AbortError: () => AbortError,
   AuthorizationError: () => AuthorizationError,
   RateLimitError: () => RateLimitError,
-  ServerError: () => ServerError
+  ServerError: () => ServerError,
+  ServiceQuotaError: () => ServiceQuotaError
 });
 module.exports = __toCommonJS(errors_exports);
 class AuthorizationError extends Error {
 }
 class RateLimitError extends Error {
+}
+class ServiceQuotaError extends Error {
 }
 class ServerError extends Error {
 }
@@ -37,5 +40,6 @@ class AbortError extends Error {
   AbortError,
   AuthorizationError,
   RateLimitError,
-  ServerError
+  ServerError,
+  ServiceQuotaError
 });

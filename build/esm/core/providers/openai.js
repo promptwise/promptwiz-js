@@ -20,7 +20,12 @@ import {
 } from "js-tiktoken";
 import { template_regex } from "../utils/parseTemplateStrings";
 import { convertChatMessagesToText, convertTextToChatMessages } from "../utils";
-import { AuthorizationError, RateLimitError, ServerError } from "../errors";
+import {
+  AuthorizationError,
+  RateLimitError,
+  ServerError,
+  ServiceQuotaError
+} from "../errors";
 const runPrompt = ({ model, access_token, parameters }, prompt, signal) => {
   if (!access_token)
     throw new AuthorizationError(
@@ -90,8 +95,11 @@ async function assessOpenAIResponse(response) {
     switch (status) {
       case 401:
         throw new AuthorizationError(message);
-      case 429:
+      case 429: {
+        if (response.statusText.includes("quota"))
+          throw new ServiceQuotaError(message);
         throw new RateLimitError(message);
+      }
       case 500:
         throw new ServerError(message);
       default:

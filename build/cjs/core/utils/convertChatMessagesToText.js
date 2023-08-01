@@ -22,7 +22,9 @@ __export(convertChatMessagesToText_exports, {
 });
 module.exports = __toCommonJS(convertChatMessagesToText_exports);
 function convertChatMessagesToText(chat) {
-  return chat.map((msg) => `${msg.role.toUpperCase()}: ${msg.content}`).join("\n\n");
+  return chat.map(
+    (msg) => `${msg.role.substring(0, 1).toUpperCase()}${msg.role.substring(1)}: ${msg.content}`
+  ).join("\n\n");
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

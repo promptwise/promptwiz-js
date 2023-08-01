@@ -132,8 +132,11 @@ function assessOpenAIResponse(response) {
       switch (status) {
         case 401:
           throw new import_errors.AuthorizationError(message);
-        case 429:
+        case 429: {
+          if (response.statusText.includes("quota"))
+            throw new import_errors.ServiceQuotaError(message);
           throw new import_errors.RateLimitError(message);
+        }
         case 500:
           throw new import_errors.ServerError(message);
         default:

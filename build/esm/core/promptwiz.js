@@ -65,13 +65,12 @@ function promptwiz(config) {
             is_running = false;
             throw new errors.AbortError();
           }
-          if (retries === max_retries || error instanceof errors.AuthorizationError) {
-            is_running = false;
-            throw error;
-          }
-          if (error instanceof errors.RateLimitError) {
+          if (retries < max_retries && error instanceof errors.RateLimitError) {
             delay *= 2 ** retries;
             await new Promise((resolve) => setTimeout(resolve, delay));
+          } else {
+            is_running = false;
+            throw error;
           }
         }
       }

@@ -455,7 +455,9 @@ function encodingForModel(model, extendSpecialTokens) {
 
 // src/core/utils/convertChatMessagesToText.ts
 function convertChatMessagesToText(chat) {
-  return chat.map((msg) => `${msg.role.toUpperCase()}: ${msg.content}`).join("\n\n");
+  return chat.map(
+    (msg) => `${msg.role.substring(0, 1).toUpperCase()}${msg.role.substring(1)}: ${msg.content}`
+  ).join("\n\n");
 }
 
 // src/core/utils/convertTextToChatMessages.ts
@@ -476,6 +478,8 @@ function convertTextToChatMessages(text) {
 var AuthorizationError = class extends Error {
 };
 var RateLimitError = class extends Error {
+};
+var ServiceQuotaError = class extends Error {
 };
 var ServerError = class extends Error {
 };
@@ -552,8 +556,11 @@ async function assessOpenAIResponse(response) {
     switch (status) {
       case 401:
         throw new AuthorizationError(message);
-      case 429:
+      case 429: {
+        if (response.statusText.includes("quota"))
+          throw new ServiceQuotaError(message);
         throw new RateLimitError(message);
+      }
       case 500:
         throw new ServerError(message);
       default:
@@ -733,13 +740,12 @@ function promptwiz(config) {
             is_running = false;
             throw new AbortError();
           }
-          if (retries === max_retries || error instanceof AuthorizationError) {
-            is_running = false;
-            throw error;
-          }
-          if (error instanceof RateLimitError) {
+          if (retries < max_retries && error instanceof RateLimitError) {
             delay *= 2 ** retries;
             await new Promise((resolve) => setTimeout(resolve, delay));
+          } else {
+            is_running = false;
+            throw error;
           }
         }
       }
@@ -754,6 +760,7 @@ export {
   AuthorizationError,
   RateLimitError,
   ServerError,
+  ServiceQuotaError,
   convertChatMessagesToText,
   convertTextToChatMessages,
   hydratePromptInputs,
