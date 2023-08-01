@@ -62,17 +62,13 @@ export function promptwiz<Inputs extends Record<string, string> | void = void>(
             is_running = false;
             throw new errors.AbortError();
           }
-          if (
-            retries === max_retries ||
-            error instanceof errors.AuthorizationError
-          ) {
-            is_running = false;
-            throw error;
-          }
-          if (error instanceof errors.RateLimitError) {
+          if (retries < max_retries && error instanceof errors.RateLimitError) {
             // Retry the atomic step with exponential backoff
             delay *= 2 ** retries;
             await new Promise((resolve) => setTimeout(resolve, delay));
+          } else {
+            is_running = false;
+            throw error;
           }
         }
       }

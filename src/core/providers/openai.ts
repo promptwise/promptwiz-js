@@ -7,7 +7,12 @@ import {
 import { ChatMessage, PromptProvider, PromptwizOutput } from "../types";
 import { template_regex } from "../utils/parseTemplateStrings";
 import { convertChatMessagesToText, convertTextToChatMessages } from "../utils";
-import { AuthorizationError, RateLimitError, ServerError } from "../errors";
+import {
+  AuthorizationError,
+  RateLimitError,
+  ServerError,
+  ServiceQuotaError,
+} from "../errors";
 
 export const runPrompt: PromptProvider = (
   { model, access_token, parameters },
@@ -113,8 +118,11 @@ async function assessOpenAIResponse(response: Response) {
     switch (status) {
       case 401:
         throw new AuthorizationError(message);
-      case 429:
+      case 429: {
+        if (response.statusText.includes("quota"))
+          throw new ServiceQuotaError(message);
         throw new RateLimitError(message);
+      }
       case 500:
         throw new ServerError(message);
       default:
