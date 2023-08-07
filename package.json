@@ -1,6 +1,6 @@
 {
   "name": "@promptwise/promptwiz-js",
-  "version": "0.1.14",
+  "version": "0.2.0",
   "description": "Promptwiz-js is a server-side TypeScript/JavaScript library for prompting large language models (LLMs) using a shared interface compatible with the Promptwise service. `npm install @promptwise/promptwiz-js`",
   "main": "./build/cjs/index.bundle.js",
   "module": "./build/esm/index.js",
@@ -20,8 +20,7 @@
   },
   "author": "Aaron Goin",
   "license": "MIT",
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "@anthropic-ai/tokenizer": "^0.0.4",
     "@types/jest": "^29.2.0",
