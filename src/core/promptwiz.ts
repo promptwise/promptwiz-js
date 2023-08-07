@@ -1,85 +1,46 @@
-import { hydratePromptInputs } from "./utils/hydratePromptInputs";
-import * as providers from "./providers";
 import {
   Promptwiz,
   PromptwizConfig,
   PromptwizOutput,
-  // StreamHandler,
 } from "./types";
-import * as errors from "./errors";
+import { getProvider } from "./getProvider";
 
-export function promptwiz<Inputs extends Record<string, string> | void = void>(
+export function promptwiz<Inputs extends Record<string, string>>(
   config: PromptwizConfig
 ): Promptwiz<Inputs> {
   let is_running = false;
+  let ac: AbortController | null = null;
   const promptwizInstance: Promptwiz<Inputs> = {
     get is_running() {
       return is_running;
     },
 
     config(update: Partial<PromptwizConfig>): Promptwiz<Inputs> {
-      if (update.prompt) {
-        config.prompt = update.prompt;
-      }
-      if (update.controller) {
-        config.controller = update.controller;
-      }
-      if (update.prompt) {
-        config.prompt = update.prompt;
-      }
+      config = { ...config, ...update };
       return promptwizInstance;
     },
 
+    abort() {
+      ac?.abort();
+    },
+
     async run(inputs?: Inputs): Promise<PromptwizOutput> {
+      if (is_running)
+        throw new Error("Cannot run while another prompt is already running.");
       is_running = true;
-      const prompt = inputs
-        ? hydratePromptInputs(config.prompt, inputs)
-        : config.prompt;
-      const provider = providers[config.provider.name];
-
-      let retries = -1;
-      let delay = 2000;
-      const { max_retries = 3, parser } = config.controller || {};
-      const ac = new AbortController();
-
-      while (++retries <= max_retries) {
-        try {
-          if (ac.signal.aborted) throw new errors.AbortError();
-          let { outputs, original } = await provider.runPrompt(
-            config.provider,
-            prompt,
-            ac.signal
-          );
+      ac = new AbortController();
+      return getProvider(config.provider)
+        .run({ ...config, inputs })
+        .then((res) => {
           is_running = false;
-          return {
-            outputs: parser
-              ? outputs.map((o) => ({ ...o, output: parser(o.content) }))
-              : outputs,
-            original,
-          };
-        } catch (error) {
-          if (error instanceof errors.AbortError || ac.signal.aborted) {
-            is_running = false;
-            throw new errors.AbortError();
-          }
-          if (retries < max_retries && error instanceof errors.RateLimitError) {
-            // Retry the atomic step with exponential backoff
-            delay *= 2 ** retries;
-            await new Promise((resolve) => setTimeout(resolve, delay));
-          } else {
-            is_running = false;
-            throw error;
-          }
-        }
-      }
-      is_running = false;
-      return { outputs: [], original: null };
+          return res;
+        });
     },
     // stream(
     //   inputsOrHandler: Inputs | StreamHandler,
     //   handler: StreamHandler
     // ): Promise<PromptwizOutput> {
-
+    // TODO: implement streaming with option for streaming parser
     // },
   };
   return promptwizInstance;

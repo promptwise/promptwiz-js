@@ -1,3 +1,5 @@
+import { Prompt } from "../types";
+
 export const template_regex = /<(\w+)>/g;
 
 function parseStrings(value: string): string[] {
@@ -7,9 +9,7 @@ function parseStrings(value: string): string[] {
   return matches;
 }
 
-export function parseTemplateStrings(
-  value: string | Array<{ content: string }>
-): string[] {
+export function parseTemplateStrings(value: Prompt): string[] {
   const res = new Set(
     typeof value === "string"
       ? parseStrings(value)

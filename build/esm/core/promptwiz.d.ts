@@ -1,2 +1,2 @@
 import { Promptwiz, PromptwizConfig } from "./types";
-export declare function promptwiz<Inputs extends Record<string, string> | void = void>(config: PromptwizConfig): Promptwiz<Inputs>;
+export declare function promptwiz<Inputs extends Record<string, string>>(config: PromptwizConfig): Promptwiz<Inputs>;

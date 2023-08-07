@@ -16,6 +16,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var core_exports = {};
 module.exports = __toCommonJS(core_exports);
 __reExport(core_exports, require("./promptwiz"), module.exports);
+__reExport(core_exports, require("./getProvider"), module.exports);
 __reExport(core_exports, require("./providers"), module.exports);
 __reExport(core_exports, require("./utils"), module.exports);
 __reExport(core_exports, require("./types"), module.exports);

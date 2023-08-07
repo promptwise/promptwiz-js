@@ -17,65 +17,30 @@ var __spreadValues = (a, b) => {
   return a;
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
-import { hydratePromptInputs } from "./utils/hydratePromptInputs";
-import * as providers from "./providers";
-import * as errors from "./errors";
+import { getProvider } from "./getProvider";
 function promptwiz(config) {
   let is_running = false;
+  let ac = null;
   const promptwizInstance = {
     get is_running() {
       return is_running;
     },
     config(update) {
-      if (update.prompt) {
-        config.prompt = update.prompt;
-      }
-      if (update.controller) {
-        config.controller = update.controller;
-      }
-      if (update.prompt) {
-        config.prompt = update.prompt;
-      }
+      config = __spreadValues(__spreadValues({}, config), update);
       return promptwizInstance;
     },
+    abort() {
+      ac == null ? void 0 : ac.abort();
+    },
     async run(inputs) {
+      if (is_running)
+        throw new Error("Cannot run while another prompt is already running.");
       is_running = true;
-      const prompt = inputs ? hydratePromptInputs(config.prompt, inputs) : config.prompt;
-      const provider = providers[config.provider.name];
-      let retries = -1;
-      let delay = 2e3;
-      const { max_retries = 3, parser } = config.controller || {};
-      const ac = new AbortController();
-      while (++retries <= max_retries) {
-        try {
-          if (ac.signal.aborted)
-            throw new errors.AbortError();
-          let { outputs, original } = await provider.runPrompt(
-            config.provider,
-            prompt,
-            ac.signal
-          );
-          is_running = false;
-          return {
-            outputs: parser ? outputs.map((o) => __spreadProps(__spreadValues({}, o), { output: parser(o.content) })) : outputs,
-            original
-          };
-        } catch (error) {
-          if (error instanceof errors.AbortError || ac.signal.aborted) {
-            is_running = false;
-            throw new errors.AbortError();
-          }
-          if (retries < max_retries && error instanceof errors.RateLimitError) {
-            delay *= 2 ** retries;
-            await new Promise((resolve) => setTimeout(resolve, delay));
-          } else {
-            is_running = false;
-            throw error;
-          }
-        }
-      }
-      is_running = false;
-      return { outputs: [], original: null };
+      ac = new AbortController();
+      return getProvider(config.provider).run(__spreadProps(__spreadValues({}, config), { inputs })).then((res) => {
+        is_running = false;
+        return res;
+      });
     }
   };
   return promptwizInstance;

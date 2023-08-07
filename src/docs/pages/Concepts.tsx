@@ -37,7 +37,7 @@ export function Concepts({ className }: { className?: string | undefined }) {
         best to follow native HTML form conventions so that you can build forms
         with progressive enhancement in mind.
       </Paragraph>
-      <Paragraph>
+      {/* <Paragraph>
         The form is really a composition of several components: the Form, the
         Field(s), and the Submit button. The Form component generally wraps all
         the fields within the form, and which governs how the data will be
@@ -47,9 +47,9 @@ export function Concepts({ className }: { className?: string | undefined }) {
         things out correctly. Finally you'll typically have a Submit button in
         your form which will trigger a final validation, and if all is valid:
         submit the values just as you've specified.
-      </Paragraph>
+      </Paragraph> */}
       <Header level={3} name="Configuration" />
-      <Paragraph>
+      {/* <Paragraph>
         HTML forms submit data all at once when the form fields are valid, and
         the user triggers the submit event--usually clicking a submit button.
         Depending on some of the attributes set on the form element the form
@@ -60,7 +60,7 @@ export function Concepts({ className }: { className?: string | undefined }) {
           sending and retreiving form data
         </MdnLink>
         .
-      </Paragraph>
+      </Paragraph> */}
       <Header level={4} name="Provider" />
       <Paragraph>
         TODO
@@ -72,38 +72,6 @@ export function Concepts({ className }: { className?: string | undefined }) {
       <Header level={4} name="Prompt" />
       <Paragraph>
         TODO
-      </Paragraph>
-
-      <Header level={3} name="Inputs" />
-      <Paragraph>
-        Validating form inputs is a vital part of forms, and part of what gives
-        software such tremendous power over paper forms. Validation can be run
-        at the field level, on change, on blur, and can be run at the form level
-        to reference multiple values for more complex validation. Validation
-        will never prevent the user from entering a value, but it will always
-        block the user from submitting a form with any invalid values.
-      </Paragraph>
-      <Header level={4} name="Named inputs" />
-      <Paragraph>
-        Validation is built right on top of the native{" "}
-        <MdnLink href="https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation">
-          form validation
-        </MdnLink>
-        . If you're rendering to a static, potentially JavaScript-less context
-        then this is the only validation available which isn't perfect, but is
-        better than nothing.
-      </Paragraph>
-      <Header level={4} name="Chat input" />
-      <Paragraph>
-        Every field accepts a validation function which you can use to
-        accomplish your specific validation above what the native form provides.
-        The validation function is passed the current field value at time of
-        exectution and can return an error string to display.
-      </Paragraph>
-      <Paragraph>
-        Field level can be run on field change (which for text fields means
-        every key stroke), or on blur. Additionally, field-level validation is
-        run every time a form submission is attempted.
       </Paragraph>
     </Column>
   );

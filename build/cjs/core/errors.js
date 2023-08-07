@@ -20,11 +20,15 @@ var errors_exports = {};
 __export(errors_exports, {
   AbortError: () => AbortError,
   AuthorizationError: () => AuthorizationError,
+  AvailabilityError: () => AvailabilityError,
+  ParserError: () => ParserError,
   RateLimitError: () => RateLimitError,
   ServerError: () => ServerError,
   ServiceQuotaError: () => ServiceQuotaError
 });
 module.exports = __toCommonJS(errors_exports);
+class ParserError extends Error {
+}
 class AuthorizationError extends Error {
 }
 class RateLimitError extends Error {
@@ -33,12 +37,16 @@ class ServiceQuotaError extends Error {
 }
 class ServerError extends Error {
 }
+class AvailabilityError extends Error {
+}
 class AbortError extends Error {
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   AbortError,
   AuthorizationError,
+  AvailabilityError,
+  ParserError,
   RateLimitError,
   ServerError,
   ServiceQuotaError

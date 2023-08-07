@@ -18,8 +18,13 @@ npm install --save @promptwise/promptwiz-js
 Documentation and live examples can be found [here](https://promptwise.github.io/promptwiz-js/).
 
 
+## Acknowledgements
+
+dqdb (David Duong) For much of original code in `tiktoken.ts` was pulled from his openai/tiktoken fork: https://github.com/dqbd/tiktoken
+All the original authors of https://github.com/openai/tiktoken as well as a great many others whose work we all build on.
+
 ## License
 
 MIT License
 
-Copyright (c) 2022 Promptwise, All rights reserved.
+Copyright (c) 2023 Promptwise, All rights reserved.

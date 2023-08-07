@@ -1,12 +1,10 @@
 "use strict";
-var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __propIsEnum = Object.prototype.propertyIsEnumerable;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
@@ -34,10 +32,6 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve, reject) => {
@@ -64,66 +58,31 @@ __export(promptwiz_exports, {
   promptwiz: () => promptwiz
 });
 module.exports = __toCommonJS(promptwiz_exports);
-var import_hydratePromptInputs = require("./utils/hydratePromptInputs");
-var providers = __toESM(require("./providers"));
-var errors = __toESM(require("./errors"));
+var import_getProvider = require("./getProvider");
 function promptwiz(config) {
   let is_running = false;
+  let ac = null;
   const promptwizInstance = {
     get is_running() {
       return is_running;
     },
     config(update) {
-      if (update.prompt) {
-        config.prompt = update.prompt;
-      }
-      if (update.controller) {
-        config.controller = update.controller;
-      }
-      if (update.prompt) {
-        config.prompt = update.prompt;
-      }
+      config = __spreadValues(__spreadValues({}, config), update);
       return promptwizInstance;
+    },
+    abort() {
+      ac == null ? void 0 : ac.abort();
     },
     run(inputs) {
       return __async(this, null, function* () {
+        if (is_running)
+          throw new Error("Cannot run while another prompt is already running.");
         is_running = true;
-        const prompt = inputs ? (0, import_hydratePromptInputs.hydratePromptInputs)(config.prompt, inputs) : config.prompt;
-        const provider = providers[config.provider.name];
-        let retries = -1;
-        let delay = 2e3;
-        const { max_retries = 3, parser } = config.controller || {};
-        const ac = new AbortController();
-        while (++retries <= max_retries) {
-          try {
-            if (ac.signal.aborted)
-              throw new errors.AbortError();
-            let { outputs, original } = yield provider.runPrompt(
-              config.provider,
-              prompt,
-              ac.signal
-            );
-            is_running = false;
-            return {
-              outputs: parser ? outputs.map((o) => __spreadProps(__spreadValues({}, o), { output: parser(o.content) })) : outputs,
-              original
-            };
-          } catch (error) {
-            if (error instanceof errors.AbortError || ac.signal.aborted) {
-              is_running = false;
-              throw new errors.AbortError();
-            }
-            if (retries < max_retries && error instanceof errors.RateLimitError) {
-              delay *= 2 ** retries;
-              yield new Promise((resolve) => setTimeout(resolve, delay));
-            } else {
-              is_running = false;
-              throw error;
-            }
-          }
-        }
-        is_running = false;
-        return { outputs: [], original: null };
+        ac = new AbortController();
+        return (0, import_getProvider.getProvider)(config.provider).run(__spreadProps(__spreadValues({}, config), { inputs })).then((res) => {
+          is_running = false;
+          return res;
+        });
       });
     }
   };
