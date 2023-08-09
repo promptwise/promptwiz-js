@@ -10,7 +10,8 @@ import {
   parametersFromProvider,
   maxGenerationsPerPrompt,
   maxTemperature,
-  minTemperature
+  minTemperature,
+  parameters
 } from "./parameters";
 const cohere = {
   generate,
@@ -22,7 +23,8 @@ const cohere = {
   parametersFromProvider,
   maxGenerationsPerPrompt,
   maxTemperature,
-  minTemperature
+  minTemperature,
+  parameters
 };
 export {
   cohere

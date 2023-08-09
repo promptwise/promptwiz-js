@@ -2,6 +2,10 @@ class ParserError extends Error {
 }
 class AuthorizationError extends Error {
 }
+class ClientError extends Error {
+}
+class LengthError extends Error {
+}
 class RateLimitError extends Error {
 }
 class ServiceQuotaError extends Error {
@@ -16,6 +20,8 @@ export {
   AbortError,
   AuthorizationError,
   AvailabilityError,
+  ClientError,
+  LengthError,
   ParserError,
   RateLimitError,
   ServerError,

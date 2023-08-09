@@ -1,10 +1,25 @@
 "use strict";
 var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b ||= {})
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 var __objRest = (source, exclude) => {
   var target = {};
   for (var prop in source)
@@ -39,30 +54,12 @@ var import_utils = require("../../utils");
 var import_runPrompt = require("../runPrompt");
 var import_prompt = require("./prompt");
 const run = (_a) => {
-  var _b = _a, {
-    provider,
-    model,
-    access_token,
-    parameters,
-    prompt: input_prompt,
-    inputs
-  } = _b, controller = __objRest(_b, [
-    "provider",
-    "model",
-    "access_token",
-    "parameters",
-    "prompt",
-    "inputs"
-  ]);
+  var _b = _a, { prompt: input_prompt, inputs } = _b, config = __objRest(_b, ["prompt", "inputs"]);
   return (0, import_runPrompt.runPrompt)(
-    controller,
-    () => (0, import_prompt.prompt)({
-      model,
-      access_token,
-      parameters,
-      prompt: inputs ? (0, import_utils.hydratePromptInputs)(input_prompt, inputs) : input_prompt,
-      signal: controller.signal
-    })
+    __spreadProps(__spreadValues({}, config), {
+      prompt: inputs ? (0, import_utils.hydratePromptInputs)(input_prompt, inputs) : input_prompt
+    }),
+    import_prompt.prompt
   );
 };
 // Annotate the CommonJS export names for ESM import in node:

@@ -1,6 +1,22 @@
+var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 var __objRest = (source, exclude) => {
   var target = {};
   for (var prop in source)
@@ -17,30 +33,12 @@ import { hydratePromptInputs } from "../../utils";
 import { runPrompt } from "../runPrompt";
 import { prompt } from "./prompt";
 const run = (_a) => {
-  var _b = _a, {
-    provider,
-    model,
-    access_token,
-    parameters,
-    prompt: input_prompt,
-    inputs
-  } = _b, controller = __objRest(_b, [
-    "provider",
-    "model",
-    "access_token",
-    "parameters",
-    "prompt",
-    "inputs"
-  ]);
+  var _b = _a, { prompt: input_prompt, inputs } = _b, config = __objRest(_b, ["prompt", "inputs"]);
   return runPrompt(
-    controller,
-    () => prompt({
-      model,
-      access_token,
-      parameters,
-      prompt: inputs ? hydratePromptInputs(input_prompt, inputs) : input_prompt,
-      signal: controller.signal
-    })
+    __spreadProps(__spreadValues({}, config), {
+      prompt: inputs ? hydratePromptInputs(input_prompt, inputs) : input_prompt
+    }),
+    prompt
   );
 };
 export {

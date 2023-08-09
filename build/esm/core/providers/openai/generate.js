@@ -20,32 +20,28 @@ import {
 } from "../../utils";
 import {
   AuthorizationError,
+  ClientError,
   RateLimitError,
   ServerError,
-  ServiceQuotaError
+  ServiceQuotaError,
+  AvailabilityError
 } from "../../errors";
-const generate = ({
-  model,
-  access_token,
-  parameters,
-  prompt,
-  signal
-}) => {
+const generate = ({ model, access_token, parameters, prompt, signal }) => {
   if (!access_token)
     throw new AuthorizationError(
       "Missing access_token required to use OpenAI generate!"
     );
   const isChatPrompt = Array.isArray(prompt);
   const isChatModel = model.includes("gpt-3.5") || model.includes("gpt-4");
-  if (parameters == null ? void 0 : parameters.stream) {
-    parameters.stream = false;
+  const requestBody = __spreadValues({
+    model
+  }, parameters);
+  if (requestBody == null ? void 0 : requestBody.stream) {
+    requestBody.stream = false;
     console.warn(
       "Streaming responses not yet supported in promptwiz-js. Contributions welcome!"
     );
   }
-  const requestBody = __spreadValues({
-    model
-  }, parameters);
   if (isChatModel) {
     requestBody.messages = isChatPrompt ? prompt : convertTextToChatMessages(prompt);
   } else {
@@ -83,7 +79,11 @@ async function assessOpenAIResponse(response) {
       }
       case 500:
         throw new ServerError(message);
+      case 503:
+        throw new AvailabilityError(message);
       default:
+        if (status >= 400 && status < 500)
+          throw new ClientError(message);
         throw new Error(message);
     }
   }

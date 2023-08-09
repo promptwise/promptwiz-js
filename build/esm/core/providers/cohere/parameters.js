@@ -1,3 +1,6 @@
+function parameters(params) {
+  return params;
+}
 function maxGenerationsPerPrompt() {
   return 5;
 }
@@ -68,5 +71,6 @@ export {
   maxGenerationsPerPrompt,
   maxTemperature,
   minTemperature,
+  parameters,
   parametersFromProvider
 };

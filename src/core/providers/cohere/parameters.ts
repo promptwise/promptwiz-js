@@ -2,6 +2,12 @@ import { OpenAIParameters } from "../openai/types";
 import { AnthropicParameters } from "../anthropic/types";
 import { CohereParameters } from "./types";
 
+export function parameters<K extends keyof CohereParameters>(
+  params: Pick<CohereParameters, K>
+): CohereParameters {
+  return params;
+}
+
 export function maxGenerationsPerPrompt(): number {
   return 5;
 }

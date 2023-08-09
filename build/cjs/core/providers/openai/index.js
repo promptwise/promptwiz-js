@@ -37,7 +37,8 @@ const openai = {
   parametersFromProvider: import_parameters.parametersFromProvider,
   maxGenerationsPerPrompt: import_parameters.maxGenerationsPerPrompt,
   maxTemperature: import_parameters.maxTemperature,
-  minTemperature: import_parameters.minTemperature
+  minTemperature: import_parameters.minTemperature,
+  parameters: import_parameters.parameters
 };
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

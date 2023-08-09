@@ -6,6 +6,7 @@ import {
   ServerError,
   ServiceQuotaError,
   AvailabilityError,
+  ClientError,
 } from "../../errors";
 import { AnthropicParameters, AnthropicCompletion } from "./types";
 import { AnthropicModel } from "./models";
@@ -20,19 +21,19 @@ export const generate: ProviderGenerate<
       "Missing access_token required to use Anthropic generate!"
     );
 
-  if (parameters?.stream) {
-    parameters.stream = false;
-    console.warn(
-      "Streaming responses not yet supported in promptwiz-js. Contributions welcome!"
-    );
-  }
-
   const isChatPrompt = Array.isArray(prompt);
   const requestBody: Record<string, any> = {
     model,
     ...parameters,
     // stream,
   };
+
+  if (requestBody?.stream) {
+    requestBody.stream = false;
+    console.warn(
+      "Streaming responses not yet supported in promptwiz-js. Contributions welcome!"
+    );
+  }
 
   // All requests to Anthropic must follow their `\n\nHuman: prompt text\n\nAssistant:` format
   requestBody.prompt = `${(isChatPrompt
@@ -87,6 +88,7 @@ async function assessAnthropicResponse(
       case 529:
         throw new AvailabilityError(message);
       default:
+        if (status >= 400 && status < 500) throw new ClientError(message);
         throw new Error(message);
     }
   }

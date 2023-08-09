@@ -14,6 +14,7 @@ import {
   maxGenerationsPerPrompt,
   maxTemperature,
   minTemperature,
+  parameters,
 } from "./parameters";
 
 export const anthropic: PromptProviderModule<
@@ -31,4 +32,5 @@ export const anthropic: PromptProviderModule<
   maxGenerationsPerPrompt,
   maxTemperature,
   minTemperature,
+  parameters,
 };

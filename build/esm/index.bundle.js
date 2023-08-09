@@ -377,6 +377,10 @@ var ParserError = class extends Error {
 };
 var AuthorizationError = class extends Error {
 };
+var ClientError = class extends Error {
+};
+var LengthError = class extends Error {
+};
 var RateLimitError = class extends Error {
 };
 var ServiceQuotaError = class extends Error {
@@ -389,28 +393,22 @@ var AbortError = class extends Error {
 };
 
 // src/core/providers/openai/generate.ts
-var generate = ({
-  model,
-  access_token,
-  parameters,
-  prompt: prompt4,
-  signal
-}) => {
+var generate = ({ model, access_token, parameters: parameters4, prompt: prompt4, signal }) => {
   if (!access_token)
     throw new AuthorizationError(
       "Missing access_token required to use OpenAI generate!"
     );
   const isChatPrompt = Array.isArray(prompt4);
   const isChatModel = model.includes("gpt-3.5") || model.includes("gpt-4");
-  if (parameters == null ? void 0 : parameters.stream) {
-    parameters.stream = false;
+  const requestBody = __spreadValues({
+    model
+  }, parameters4);
+  if (requestBody == null ? void 0 : requestBody.stream) {
+    requestBody.stream = false;
     console.warn(
       "Streaming responses not yet supported in promptwiz-js. Contributions welcome!"
     );
   }
-  const requestBody = __spreadValues({
-    model
-  }, parameters);
   if (isChatModel) {
     requestBody.messages = isChatPrompt ? prompt4 : convertTextToChatMessages(prompt4);
   } else {
@@ -448,7 +446,11 @@ async function assessOpenAIResponse(response) {
       }
       case 500:
         throw new ServerError(message);
+      case 503:
+        throw new AvailabilityError(message);
       default:
+        if (status >= 400 && status < 500)
+          throw new ClientError(message);
         throw new Error(message);
     }
   }
@@ -509,23 +511,36 @@ var prompt = (config) => generate(config).then((original) => {
 });
 
 // src/core/providers/runPrompt.ts
-async function runPrompt({
-  max_retries = 3,
-  retry_if_parser_fails = true,
-  parser,
-  signal
-}, runner) {
+async function runPrompt(_a, promptRunner) {
+  var _b = _a, {
+    max_retries = 3,
+    retry_if_parser_fails = true,
+    parser,
+    signal,
+    fallbacks
+  } = _b, config = __objRest(_b, [
+    "max_retries",
+    "retry_if_parser_fails",
+    "parser",
+    "signal",
+    "fallbacks"
+  ]);
   let retries = -1;
   let delay = 0;
   let cumulative_input_tokens = 0;
   let cumulative_output_tokens = 0;
   let cumulative_cost = 0;
   let run_error;
+  let current = {
+    provider: config.provider,
+    model: config.model,
+    parameters: config.parameters
+  };
   while (++retries <= max_retries) {
     try {
       if (signal == null ? void 0 : signal.aborted)
         throw new AbortError();
-      const { outputs, original, usage } = await runner();
+      const { outputs, original, usage } = await promptRunner(__spreadValues(__spreadValues({}, config), current));
       cumulative_input_tokens += usage.input_tokens;
       cumulative_output_tokens += usage.output_tokens;
       cumulative_cost += usage.cost;
@@ -553,6 +568,26 @@ async function runPrompt({
       if (error instanceof AbortError || (signal == null ? void 0 : signal.aborted)) {
         throw new AbortError();
       }
+      let strategy = fallbacks == null ? void 0 : fallbacks[error == null ? void 0 : error.contructor.name];
+      if (strategy && strategy.after >= max_retries) {
+        const c = strategy.models.findIndex(
+          (m) => m.provider === current.provider && m.model === current.model
+        );
+        const next = strategy.models[Math.min(c + 1, strategy.models.length - 1)];
+        let parameters4 = next.parameters;
+        if (!parameters4) {
+          parameters4 = next.provider === config.provider ? config.parameters : next.provider === current.provider ? current.parameters : config.parameters ? getProvider(next.provider).parametersFromProvider(
+            config.provider,
+            config.parameters
+          ) : void 0;
+        }
+        current = {
+          provider: next.provider,
+          model: next.model,
+          parameters: parameters4
+        };
+        continue;
+      }
       if (retries < max_retries && error instanceof RateLimitError) {
         delay = 2e3 * 2 ** retries;
         await new Promise((resolve) => setTimeout(resolve, delay));
@@ -579,34 +614,19 @@ async function runPrompt({
 
 // src/core/providers/openai/run.ts
 var run = (_a) => {
-  var _b = _a, {
-    provider,
-    model,
-    access_token,
-    parameters,
-    prompt: input_prompt,
-    inputs
-  } = _b, controller = __objRest(_b, [
-    "provider",
-    "model",
-    "access_token",
-    "parameters",
-    "prompt",
-    "inputs"
-  ]);
+  var _b = _a, { prompt: input_prompt, inputs } = _b, config = __objRest(_b, ["prompt", "inputs"]);
   return runPrompt(
-    controller,
-    () => prompt({
-      model,
-      access_token,
-      parameters,
-      prompt: inputs ? hydratePromptInputs(input_prompt, inputs) : input_prompt,
-      signal: controller.signal
-    })
+    __spreadProps(__spreadValues({}, config), {
+      prompt: inputs ? hydratePromptInputs(input_prompt, inputs) : input_prompt
+    }),
+    prompt
   );
 };
 
 // src/core/providers/openai/parameters.ts
+function parameters(params) {
+  return params;
+}
 function maxGenerationsPerPrompt() {
   return 16;
 }
@@ -679,7 +699,8 @@ var openai = {
   parametersFromProvider,
   maxGenerationsPerPrompt,
   maxTemperature,
-  minTemperature
+  minTemperature,
+  parameters
 };
 
 // src/core/providers/cohere/models.ts
@@ -730,25 +751,25 @@ var tokenizer2 = (model, extendedSpecialTokens) => {
 };
 
 // src/core/providers/cohere/generate.ts
-var generate2 = ({ model, access_token, parameters, prompt: prompt4, signal }) => {
+var generate2 = ({ model, access_token, parameters: parameters4, prompt: prompt4, signal }) => {
   if (!access_token)
     throw new AuthorizationError(
       "Missing access_token required to use Cohere generate!"
     );
-  if (parameters == null ? void 0 : parameters.stream) {
-    parameters.stream = false;
-    console.warn(
-      "Streaming responses not yet supported in promptwiz-js. Contributions welcome!"
-    );
-  }
   const isChatPrompt = Array.isArray(prompt4);
   const requestBody = __spreadProps(__spreadValues({
     model,
     max_tokens: 20
-  }, parameters), {
+  }, parameters4), {
     truncate: "NONE",
     return_likelihoods: "NONE"
   });
+  if (requestBody == null ? void 0 : requestBody.stream) {
+    requestBody.stream = false;
+    console.warn(
+      "Streaming responses not yet supported in promptwiz-js. Contributions welcome!"
+    );
+  }
   requestBody.prompt = isChatPrompt ? `${convertChatMessagesToText(prompt4)}
 
 Assistant:` : prompt4;
@@ -780,6 +801,8 @@ async function assessCohereResponse(response) {
       case 500:
         throw new ServerError(message);
       default:
+        if (status >= 400 && status < 500)
+          throw new ClientError(message);
         throw new Error(message);
     }
   }
@@ -820,34 +843,19 @@ var prompt2 = (config) => generate2(config).then((original) => {
 
 // src/core/providers/cohere/run.ts
 var run2 = (_a) => {
-  var _b = _a, {
-    provider,
-    model,
-    access_token,
-    parameters,
-    prompt: input_prompt,
-    inputs
-  } = _b, controller = __objRest(_b, [
-    "provider",
-    "model",
-    "access_token",
-    "parameters",
-    "prompt",
-    "inputs"
-  ]);
+  var _b = _a, { prompt: input_prompt, inputs } = _b, config = __objRest(_b, ["prompt", "inputs"]);
   return runPrompt(
-    controller,
-    () => prompt2({
-      model,
-      access_token,
-      parameters,
-      prompt: inputs ? hydratePromptInputs(input_prompt, inputs) : input_prompt,
-      signal: controller.signal
-    })
+    __spreadProps(__spreadValues({}, config), {
+      prompt: inputs ? hydratePromptInputs(input_prompt, inputs) : input_prompt
+    }),
+    prompt2
   );
 };
 
 // src/core/providers/cohere/parameters.ts
+function parameters2(params) {
+  return params;
+}
 function maxGenerationsPerPrompt2() {
   return 5;
 }
@@ -926,7 +934,8 @@ var cohere = {
   parametersFromProvider: parametersFromProvider2,
   maxGenerationsPerPrompt: maxGenerationsPerPrompt2,
   maxTemperature: maxTemperature2,
-  minTemperature: minTemperature2
+  minTemperature: minTemperature2,
+  parameters: parameters2
 };
 
 // src/core/providers/anthropic/models.ts
@@ -975,21 +984,21 @@ var tokenizer3 = (model, extendedSpecialTokens) => {
 };
 
 // src/core/providers/anthropic/generate.ts
-var generate3 = ({ model, access_token, parameters, prompt: prompt4, signal }) => {
+var generate3 = ({ model, access_token, parameters: parameters4, prompt: prompt4, signal }) => {
   if (!access_token)
     throw new AuthorizationError(
       "Missing access_token required to use Anthropic generate!"
     );
-  if (parameters == null ? void 0 : parameters.stream) {
-    parameters.stream = false;
+  const isChatPrompt = Array.isArray(prompt4);
+  const requestBody = __spreadValues({
+    model
+  }, parameters4);
+  if (requestBody == null ? void 0 : requestBody.stream) {
+    requestBody.stream = false;
     console.warn(
       "Streaming responses not yet supported in promptwiz-js. Contributions welcome!"
     );
   }
-  const isChatPrompt = Array.isArray(prompt4);
-  const requestBody = __spreadValues({
-    model
-  }, parameters);
   requestBody.prompt = `${(isChatPrompt ? convertChatMessagesToText(prompt4) : prompt4).replaceAll("User:", "Human:")}
 
 Assistant:`;
@@ -1030,6 +1039,8 @@ async function assessAnthropicResponse(response) {
       case 529:
         throw new AvailabilityError(message);
       default:
+        if (status >= 400 && status < 500)
+          throw new ClientError(message);
         throw new Error(message);
     }
   }
@@ -1065,34 +1076,19 @@ var prompt3 = (config) => generate3(config).then((original) => {
 
 // src/core/providers/anthropic/run.ts
 var run3 = (_a) => {
-  var _b = _a, {
-    provider,
-    model,
-    access_token,
-    parameters,
-    prompt: input_prompt,
-    inputs
-  } = _b, controller = __objRest(_b, [
-    "provider",
-    "model",
-    "access_token",
-    "parameters",
-    "prompt",
-    "inputs"
-  ]);
+  var _b = _a, { prompt: input_prompt, inputs } = _b, config = __objRest(_b, ["prompt", "inputs"]);
   return runPrompt(
-    controller,
-    () => prompt3({
-      model,
-      access_token,
-      parameters,
-      prompt: inputs ? hydratePromptInputs(input_prompt, inputs) : input_prompt,
-      signal: controller.signal
-    })
+    __spreadProps(__spreadValues({}, config), {
+      prompt: inputs ? hydratePromptInputs(input_prompt, inputs) : input_prompt
+    }),
+    prompt3
   );
 };
 
 // src/core/providers/anthropic/parameters.ts
+function parameters3(params) {
+  return params;
+}
 function maxGenerationsPerPrompt3() {
   return 1;
 }
@@ -1159,7 +1155,8 @@ var anthropic = {
   parametersFromProvider: parametersFromProvider3,
   maxGenerationsPerPrompt: maxGenerationsPerPrompt3,
   maxTemperature: maxTemperature3,
-  minTemperature: minTemperature3
+  minTemperature: minTemperature3,
+  parameters: parameters3
 };
 
 // src/core/getProvider.ts
@@ -1171,6 +1168,7 @@ function getProvider(name) {
 
 // src/core/promptwiz.ts
 function promptwiz(config) {
+  config = __spreadValues({}, config);
   let is_running = false;
   let ac = null;
   const promptwizInstance = {
@@ -1201,6 +1199,8 @@ export {
   AbortError,
   AuthorizationError,
   AvailabilityError,
+  ClientError,
+  LengthError,
   ParserError,
   RateLimitError,
   ServerError,

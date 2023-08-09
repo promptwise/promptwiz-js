@@ -1,3 +1,4 @@
+import { FallbackErrors } from "./errors";
 import { Tiktoken } from "./providers/tiktoken";
 
 export type PromptOutput<T = string> = {
@@ -30,15 +31,31 @@ export type PromptwizControllerConfig<O> = {
   signal?: AbortSignal;
 };
 
+export type ProviderName = "openai" | "cohere" | "anthropic";
+
+export type FallbackStrategy = {
+  // how many errors before we bail and try a different model?
+  after: number;
+  // explicit list of backup providers and models
+  models: Array<{
+    provider: ProviderName;
+    model: string;
+    parameters?: Record<string, unknown>;
+  }>;
+};
+
+export type Fallbacks = Record<FallbackErrors, null | FallbackStrategy>;
+
 export type PromptwizPromptConfig<
   M extends string = string,
   P = Record<string, unknown>
 > = {
-  provider: "openai" | "cohere" | "anthropic";
+  provider: ProviderName;
   access_token: string;
   model: M;
   parameters?: P;
   prompt: Prompt;
+  fallbacks?: Fallbacks;
 };
 
 export type PromptwizConfig<
@@ -164,4 +181,6 @@ export interface PromptProviderModule<
     provider: string,
     parameters: Record<string, unknown>
   ): P;
+
+  parameters<K extends keyof P>(params: Pick<P, K>): P;
 }

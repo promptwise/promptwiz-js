@@ -21,11 +21,15 @@ __export(parameters_exports, {
   maxGenerationsPerPrompt: () => maxGenerationsPerPrompt,
   maxTemperature: () => maxTemperature,
   minTemperature: () => minTemperature,
+  parameters: () => parameters,
   parametersFromAnthropic: () => parametersFromAnthropic,
   parametersFromCohere: () => parametersFromCohere,
   parametersFromProvider: () => parametersFromProvider
 });
 module.exports = __toCommonJS(parameters_exports);
+function parameters(params) {
+  return params;
+}
 function maxGenerationsPerPrompt() {
   return 16;
 }
@@ -91,6 +95,7 @@ function parametersFromCohere(params) {
   maxGenerationsPerPrompt,
   maxTemperature,
   minTemperature,
+  parameters,
   parametersFromAnthropic,
   parametersFromCohere,
   parametersFromProvider

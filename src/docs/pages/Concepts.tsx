@@ -16,11 +16,11 @@ export const conceptsLinks = [
     "Lifecycle",
     "Configuration",
     ["Provider", "Controller", "Prompt"],
+    "Layered runtime",
+    "Prompts",
+    ["Text prompt", "Chat prompt"],
     "Inputs",
-    [
-      "Named inputs",
-      "Chat input",
-    ]
+    ["Named inputs", "Chat input"],
   ],
 ];
 
@@ -29,25 +29,10 @@ export function Concepts({ className }: { className?: string | undefined }) {
     <Column space={2} className={className}>
       <Header level={2} name="Concepts" />
 
-      <Header level={3} name="Lifecycle" />
+      <Header level={3} name="Library structure" />
       <Paragraph>
-        The backbone of every web application is the form. You want to accept
-        normalized inputs from your users, and submit these values painless to
-        your server, or manipulate easily in JavaScript. promptwiz-js does its
-        best to follow native HTML form conventions so that you can build forms
-        with progressive enhancement in mind.
+        If you intend to 
       </Paragraph>
-      {/* <Paragraph>
-        The form is really a composition of several components: the Form, the
-        Field(s), and the Submit button. The Form component generally wraps all
-        the fields within the form, and which governs how the data will be
-        submitted. Inside your Form, you'll have one or more normalized or
-        freeform Field components for your user to enter data, and upon which
-        you can have more specific validation rules to help your users fill
-        things out correctly. Finally you'll typically have a Submit button in
-        your form which will trigger a final validation, and if all is valid:
-        submit the values just as you've specified.
-      </Paragraph> */}
       <Header level={3} name="Configuration" />
       {/* <Paragraph>
         HTML forms submit data all at once when the form fields are valid, and
@@ -62,17 +47,50 @@ export function Concepts({ className }: { className?: string | undefined }) {
         .
       </Paragraph> */}
       <Header level={4} name="Provider" />
-      <Paragraph>
-        TODO
-      </Paragraph>
+      <Paragraph>TODO</Paragraph>
       <Header level={4} name="Controller" />
+      <Paragraph>TODO</Paragraph>
+      <Header level={4} name="Prompts" />
       <Paragraph>
-        TODO
+        The "prompt" is the foundation of today's generative AI and is simply
+        the natural language text that is fed into the model that drives it's
+        output. Using natural language is tremendously flexible which can be a
+        double-edged sword.
       </Paragraph>
-      <Header level={4} name="Prompt" />
       <Paragraph>
-        TODO
+        Promptwiz supports the traditional plain-text prompt format as well as
+        OpenAI's new chat message object format, and will automatically convert
+        your prompt from one to the other as appropriate as needed given the
+        model you use, so you're free to use the one you prefer most.
       </Paragraph>
+      <Header level={5} name="Text prompt" />
+      <Paragraph>
+        The text prompt can be anything depending on your generative needs and
+        is typically uncontrained by notions of conversation--though this is not
+        a hard rule. Prompts in this format allow for more specific behaviors
+        and outputs from the model.
+      </Paragraph>
+      <CodeBlock>{`You are an expert at tootsie-popology.
+
+Question: How many licks does it take to get to the center of a tootsie pop?
+
+Answer:`}</CodeBlock>
+      <Header level={5} name="Chat prompt" />
+      <Paragraph>
+        The chat prompt is simply a sequence of text messages between user(s)
+        and assistant(s), and for models that support this structure the model
+        will attempt to fill the role of an assistant.
+      </Paragraph>
+      <CodeBlock>{`[
+  {
+    role: "system",
+    content: "You are an expert at tootsie-popology."
+  }
+  {
+    role: "user",
+    content: "How many licks does it take to get to the center of a tootsie pop?"
+  }
+]`}</CodeBlock>
     </Column>
   );
 }

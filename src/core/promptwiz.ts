@@ -1,13 +1,10 @@
-import {
-  Promptwiz,
-  PromptwizConfig,
-  PromptwizOutput,
-} from "./types";
+import { Promptwiz, PromptwizConfig, PromptwizOutput } from "./types";
 import { getProvider } from "./getProvider";
 
 export function promptwiz<Inputs extends Record<string, string>>(
   config: PromptwizConfig
 ): Promptwiz<Inputs> {
+  config = { ...config };
   let is_running = false;
   let ac: AbortController | null = null;
   const promptwizInstance: Promptwiz<Inputs> = {

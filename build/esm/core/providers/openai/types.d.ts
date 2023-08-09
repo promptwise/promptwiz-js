@@ -14,6 +14,11 @@ export type OpenAICompletion = {
         total_tokens: number;
     };
 };
+export type OpenAIFunction = {
+    name: string;
+    description?: string;
+    parameters: {};
+};
 export type OpenAIParameters = {
     n?: number;
     max_tokens?: number;
@@ -24,5 +29,10 @@ export type OpenAIParameters = {
     presence_penalty?: number;
     stop?: string[];
     logit_bias?: Record<number, number>;
+    functions?: OpenAIFunction[];
+    function_call?: "none" | "auto" | {
+        name: string;
+    };
     stream?: boolean;
+    user?: string;
 };

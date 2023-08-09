@@ -9,7 +9,7 @@ import {
   DocLink,
 } from "../components";
 
-export const introductionLinks = ["Introduction"];
+export const introductionLinks = ["Introduction", ["Should I use promptwiz?"]];
 
 export function Introduction({
   className,
@@ -22,14 +22,10 @@ export function Introduction({
       <Paragraph>
         Promptwiz-js is a JavaScript/TypeScript library for prompting large
         language models (LLMs) from various providers as well as tokenizing
-        their inputs, outputs, and calculating prompt costs.
+        their inputs, outputs, and calculating prompt costs, with robust
+        fallback strategies and error handling for increased reliability.
       </Paragraph>
       <Paragraph>Supported providers: Anthropic, Cohere, and OpenAI</Paragraph>
-      <Paragraph>
-        NOTE: Promptwiz focuses strictly on generative use cases and makes no
-        effort to support other more specific models or apis, nor does it work with
-        custom models at this time.
-      </Paragraph>
       <Paragraph>Here's an example:</Paragraph>
       <CodeBlock>{`import { promptwiz } from "@promptwise/promptwiz-js";
 
@@ -74,6 +70,22 @@ console.log(result);
 //   }
 // }
 `}</CodeBlock>
+      <Header level={3} name="Should I use promptwiz?" />
+      <Paragraph>
+        Promptwiz focuses strictly on generative use cases and makes no effort
+        to support other more specific models or apis, nor does it work with
+        custom models at this time.
+      </Paragraph>
+      <Paragraph>
+        So if your use cases are more specific, or are focused on non-generative
+        use cases then promptwiz likely isn't for you. Additionally if you're
+        set on using a single provider, you may be better served using their SDK
+        directly. Lastly if you need a leaner deployment unencumbered by the
+        tokenizer, then you may also be better served by another library. Note
+        that promptwiz has an api for generating text without any tokenization,
+        so if you prefer to run any tokenization out of band of your prompts,
+        that is supported.
+      </Paragraph>
     </Column>
   );
 }

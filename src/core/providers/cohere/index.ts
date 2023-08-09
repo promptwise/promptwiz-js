@@ -14,6 +14,7 @@ import {
   maxGenerationsPerPrompt,
   maxTemperature,
   minTemperature,
+  parameters,
 } from "./parameters";
 
 export const cohere: PromptProviderModule<
@@ -31,4 +32,5 @@ export const cohere: PromptProviderModule<
   maxGenerationsPerPrompt,
   maxTemperature,
   minTemperature,
+  parameters,
 };

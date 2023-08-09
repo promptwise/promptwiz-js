@@ -14,6 +14,7 @@ import {
   maxGenerationsPerPrompt,
   maxTemperature,
   minTemperature,
+  parameters,
 } from "./parameters";
 
 export const openai: PromptProviderModule<
@@ -31,4 +32,5 @@ export const openai: PromptProviderModule<
   maxGenerationsPerPrompt,
   maxTemperature,
   minTemperature,
+  parameters,
 };

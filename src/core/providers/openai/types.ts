@@ -22,6 +22,12 @@ export type OpenAICompletion = {
   };
 };
 
+export type OpenAIFunction = {
+  name: string;
+  description?: string; // description/prompt for Model to know when to use this function
+  parameters: {}; // JSONSchema for parameters the function accepts, or `{"type": "object", "properties": {}}` if no parameters for function
+}
+
 export type OpenAIParameters = {
   n?: number; // 1 - 16
   max_tokens?: number; // 1 - depends on model
@@ -31,6 +37,9 @@ export type OpenAIParameters = {
   frequency_penalty?: number; // -2.0 - 2.0
   presence_penalty?: number; // -2.0 - 2.0
   stop?: string[]; // end output on any of these and include them in the output
-  logit_bias?: Record<number, number>; // keys are tokens, values: -10 - 10
+  logit_bias?: Record<number, number>; // keys are tokens, values: -100 - 100
+  functions?: OpenAIFunction[];
+  function_call?: "none" | "auto" | { name: string },
   stream?: boolean;
+  user?: string; // unique identifier to ID your user (if desired)
 };

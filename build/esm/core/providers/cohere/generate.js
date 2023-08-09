@@ -20,6 +20,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 import { convertChatMessagesToText } from "../../utils";
 import {
   AuthorizationError,
+  ClientError,
   RateLimitError,
   ServerError,
   ServiceQuotaError
@@ -29,12 +30,6 @@ const generate = ({ model, access_token, parameters, prompt, signal }) => {
     throw new AuthorizationError(
       "Missing access_token required to use Cohere generate!"
     );
-  if (parameters == null ? void 0 : parameters.stream) {
-    parameters.stream = false;
-    console.warn(
-      "Streaming responses not yet supported in promptwiz-js. Contributions welcome!"
-    );
-  }
   const isChatPrompt = Array.isArray(prompt);
   const requestBody = __spreadProps(__spreadValues({
     model,
@@ -43,6 +38,12 @@ const generate = ({ model, access_token, parameters, prompt, signal }) => {
     truncate: "NONE",
     return_likelihoods: "NONE"
   });
+  if (requestBody == null ? void 0 : requestBody.stream) {
+    requestBody.stream = false;
+    console.warn(
+      "Streaming responses not yet supported in promptwiz-js. Contributions welcome!"
+    );
+  }
   requestBody.prompt = isChatPrompt ? `${convertChatMessagesToText(prompt)}
 
 Assistant:` : prompt;
@@ -74,6 +75,8 @@ async function assessCohereResponse(response) {
       case 500:
         throw new ServerError(message);
       default:
+        if (status >= 400 && status < 500)
+          throw new ClientError(message);
         throw new Error(message);
     }
   }

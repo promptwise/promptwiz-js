@@ -10,7 +10,8 @@ import {
   parametersFromProvider,
   maxGenerationsPerPrompt,
   maxTemperature,
-  minTemperature
+  minTemperature,
+  parameters
 } from "./parameters";
 const anthropic = {
   generate,
@@ -22,7 +23,8 @@ const anthropic = {
   parametersFromProvider,
   maxGenerationsPerPrompt,
   maxTemperature,
-  minTemperature
+  minTemperature,
+  parameters
 };
 export {
   anthropic

@@ -20,23 +20,24 @@ import {
   RateLimitError,
   ServerError,
   ServiceQuotaError,
-  AvailabilityError
+  AvailabilityError,
+  ClientError
 } from "../../errors";
 const generate = ({ model, access_token, parameters, prompt, signal }) => {
   if (!access_token)
     throw new AuthorizationError(
       "Missing access_token required to use Anthropic generate!"
     );
-  if (parameters == null ? void 0 : parameters.stream) {
-    parameters.stream = false;
-    console.warn(
-      "Streaming responses not yet supported in promptwiz-js. Contributions welcome!"
-    );
-  }
   const isChatPrompt = Array.isArray(prompt);
   const requestBody = __spreadValues({
     model
   }, parameters);
+  if (requestBody == null ? void 0 : requestBody.stream) {
+    requestBody.stream = false;
+    console.warn(
+      "Streaming responses not yet supported in promptwiz-js. Contributions welcome!"
+    );
+  }
   requestBody.prompt = `${(isChatPrompt ? convertChatMessagesToText(prompt) : prompt).replaceAll("User:", "Human:")}
 
 Assistant:`;
@@ -77,6 +78,8 @@ async function assessAnthropicResponse(response) {
       case 529:
         throw new AvailabilityError(message);
       default:
+        if (status >= 400 && status < 500)
+          throw new ClientError(message);
         throw new Error(message);
     }
   }

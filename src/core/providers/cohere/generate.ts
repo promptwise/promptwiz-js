@@ -2,6 +2,7 @@ import { ProviderGenerate } from "../../types";
 import { convertChatMessagesToText } from "../../utils";
 import {
   AuthorizationError,
+  ClientError,
   RateLimitError,
   ServerError,
   ServiceQuotaError,
@@ -19,13 +20,6 @@ export const generate: ProviderGenerate<
       "Missing access_token required to use Cohere generate!"
     );
 
-  if (parameters?.stream) {
-    parameters.stream = false;
-    console.warn(
-      "Streaming responses not yet supported in promptwiz-js. Contributions welcome!"
-    );
-  }
-
   const isChatPrompt = Array.isArray(prompt);
   const requestBody: Record<string, any> = {
     model,
@@ -34,6 +28,13 @@ export const generate: ProviderGenerate<
     truncate: "NONE",
     return_likelihoods: "NONE",
   };
+
+  if (requestBody?.stream) {
+    requestBody.stream = false;
+    console.warn(
+      "Streaming responses not yet supported in promptwiz-js. Contributions welcome!"
+    );
+  }
 
   requestBody.prompt = isChatPrompt
     ? `${convertChatMessagesToText(prompt)}\n\nAssistant:`
@@ -79,6 +80,7 @@ async function assessCohereResponse(
       case 500:
         throw new ServerError(message);
       default:
+        if (status >= 400 && status < 500) throw new ClientError(message);
         throw new Error(message);
     }
   }

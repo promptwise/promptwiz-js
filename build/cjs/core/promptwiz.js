@@ -60,6 +60,7 @@ __export(promptwiz_exports, {
 module.exports = __toCommonJS(promptwiz_exports);
 var import_getProvider = require("./getProvider");
 function promptwiz(config) {
+  config = __spreadValues({}, config);
   let is_running = false;
   let ac = null;
   const promptwizInstance = {

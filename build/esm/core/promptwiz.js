@@ -19,6 +19,7 @@ var __spreadValues = (a, b) => {
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 import { getProvider } from "./getProvider";
 function promptwiz(config) {
+  config = __spreadValues({}, config);
   let is_running = false;
   let ac = null;
   const promptwizInstance = {

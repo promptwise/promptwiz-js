@@ -9,21 +9,12 @@ export const run: ProviderRun<
   CohereModel,
   CohereParameters,
   CohereCompletion
-> = ({
-  provider,
-  model,
-  access_token,
-  parameters,
-  prompt: input_prompt,
-  inputs,
-  ...controller
-}) =>
-  runPrompt(controller, () =>
-    prompt({
-      model,
-      access_token,
-      parameters,
+> = ({ prompt: input_prompt, inputs, ...config }) =>
+  runPrompt<any>(
+    // @ts-expect-error - later
+    {
+      ...config,
       prompt: inputs ? hydratePromptInputs(input_prompt, inputs) : input_prompt,
-      signal: controller.signal,
-    })
+    },
+    prompt
   );

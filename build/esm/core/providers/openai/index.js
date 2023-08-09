@@ -10,7 +10,8 @@ import {
   parametersFromProvider,
   maxGenerationsPerPrompt,
   maxTemperature,
-  minTemperature
+  minTemperature,
+  parameters
 } from "./parameters";
 const openai = {
   generate,
@@ -22,7 +23,8 @@ const openai = {
   parametersFromProvider,
   maxGenerationsPerPrompt,
   maxTemperature,
-  minTemperature
+  minTemperature,
+  parameters
 };
 export {
   openai

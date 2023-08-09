@@ -21,6 +21,8 @@ __export(errors_exports, {
   AbortError: () => AbortError,
   AuthorizationError: () => AuthorizationError,
   AvailabilityError: () => AvailabilityError,
+  ClientError: () => ClientError,
+  LengthError: () => LengthError,
   ParserError: () => ParserError,
   RateLimitError: () => RateLimitError,
   ServerError: () => ServerError,
@@ -30,6 +32,10 @@ module.exports = __toCommonJS(errors_exports);
 class ParserError extends Error {
 }
 class AuthorizationError extends Error {
+}
+class ClientError extends Error {
+}
+class LengthError extends Error {
 }
 class RateLimitError extends Error {
 }
@@ -46,6 +52,8 @@ class AbortError extends Error {
   AbortError,
   AuthorizationError,
   AvailabilityError,
+  ClientError,
+  LengthError,
   ParserError,
   RateLimitError,
   ServerError,

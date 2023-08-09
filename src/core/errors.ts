@@ -7,6 +7,14 @@ export class AuthorizationError extends Error {
   // User is missing generate key or is using invalid generate key
 }
 
+export class ClientError extends Error {
+  // Invalid request--due to malformed parameters, or something
+}
+
+export class LengthError extends Error {
+  // The request made was too larger for the given model
+}
+
 export class RateLimitError extends Error {
   // Model provider is rate limiting us
 }
@@ -24,3 +32,12 @@ export class AvailabilityError extends Error {
 }
 
 export class AbortError extends Error {}
+
+
+export type FallbackErrors =
+  | "AvailabilityError"
+  | "LengthError"
+  | "ParserError"
+  | "RateLimitError"
+  | "ServerError"
+  | "ServiceQuotaError";

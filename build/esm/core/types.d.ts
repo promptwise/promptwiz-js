@@ -1,3 +1,4 @@
+import { FallbackErrors } from "./errors";
 import { Tiktoken } from "./providers/tiktoken";
 export type PromptOutput<T = string> = {
     content: T;
@@ -27,12 +28,23 @@ export type PromptwizControllerConfig<O> = {
     parser?: (output: string) => O;
     signal?: AbortSignal;
 };
+export type ProviderName = "openai" | "cohere" | "anthropic";
+export type FallbackStrategy = {
+    after: number;
+    models: Array<{
+        provider: ProviderName;
+        model: string;
+        parameters?: Record<string, unknown>;
+    }>;
+};
+export type Fallbacks = Record<FallbackErrors, null | FallbackStrategy>;
 export type PromptwizPromptConfig<M extends string = string, P = Record<string, unknown>> = {
-    provider: "openai" | "cohere" | "anthropic";
+    provider: ProviderName;
     access_token: string;
     model: M;
     parameters?: P;
     prompt: Prompt;
+    fallbacks?: Fallbacks;
 };
 export type PromptwizConfig<M extends string = string, P = Record<string, unknown>, O = string> = PromptwizPromptConfig<M, P> & PromptwizControllerConfig<O>;
 export type StreamHandler = (token: string, done: boolean) => unknown;
@@ -79,4 +91,5 @@ export interface PromptProviderModule<M extends string = string, P = Record<stri
     minTemperature(): number;
     promptDollarCostForModel(model: M, input_tokens: number, output_tokens: number): number;
     parametersFromProvider(provider: string, parameters: Record<string, unknown>): P;
+    parameters<K extends keyof P>(params: Pick<P, K>): P;
 }
