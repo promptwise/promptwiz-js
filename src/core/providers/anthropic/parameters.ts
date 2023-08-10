@@ -33,7 +33,8 @@ function parametersFromOpenAI(params: OpenAIParameters): AnthropicParameters {
   const result: AnthropicParameters = {};
   if (params.max_tokens != null)
     result.max_tokens_to_sample = params.max_tokens;
-  if (params.temperature != null) result.temperature = params.temperature / 2;
+  if (params.temperature != null)
+    result.temperature = Math.max(0, Math.min(params.temperature / 2, 1));
   if (params.top_k != null) result.top_k = params.top_k;
   if (params.top_p != null) result.top_p = params.top_p;
   if (Array.isArray(params.stop) && params.stop.length)
@@ -47,7 +48,8 @@ function parametersFromCohere(params: CohereParameters): AnthropicParameters {
   const result: AnthropicParameters = {};
   if (params.max_tokens != null)
     result.max_tokens_to_sample = params.max_tokens;
-  if (params.temperature != null) result.temperature = params.temperature / 5;
+  if (params.temperature != null)
+    result.temperature = Math.max(0, Math.min(params.temperature / 5, 1));
   if (params.k != null) {
     result.top_k = params.k;
   }

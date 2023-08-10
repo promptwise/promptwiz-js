@@ -10,6 +10,7 @@ export const models = {
   "claude-1": ["anthropic_64k", 100_000, 1.102, 3.268] as ModelData,
   // Current model checkpoints
   "claude-instant-1.1": ["anthropic_64k", 100_000, 0.163, 0.551] as ModelData,
+  "claude-instant-1.2": ["anthropic_64k", 100_000, 0.163, 0.551] as ModelData,
   "claude-2.0": ["anthropic_64k", 100_000, 1.102, 3.268] as ModelData,
   // Current models
   "claude-instant-1": ["anthropic_64k", 100_000, 0.163, 0.551] as ModelData,
