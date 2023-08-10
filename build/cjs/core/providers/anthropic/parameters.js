@@ -49,7 +49,7 @@ function parametersFromOpenAI(params) {
   if (params.max_tokens != null)
     result.max_tokens_to_sample = params.max_tokens;
   if (params.temperature != null)
-    result.temperature = params.temperature / 2;
+    result.temperature = Math.max(0, Math.min(params.temperature / 2, 1));
   if (params.top_k != null)
     result.top_k = params.top_k;
   if (params.top_p != null)
@@ -65,7 +65,7 @@ function parametersFromCohere(params) {
   if (params.max_tokens != null)
     result.max_tokens_to_sample = params.max_tokens;
   if (params.temperature != null)
-    result.temperature = params.temperature / 5;
+    result.temperature = Math.max(0, Math.min(params.temperature / 5, 1));
   if (params.k != null) {
     result.top_k = params.k;
   }

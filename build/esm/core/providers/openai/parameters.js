@@ -22,7 +22,7 @@ function parametersFromAnthropic(params) {
   if (params.max_tokens_to_sample != null)
     result.max_tokens = params.max_tokens_to_sample;
   if (params.temperature != null)
-    result.temperature = params.temperature / 2;
+    result.temperature = Math.max(0, Math.min(params.temperature / 2, 2));
   if (params.top_k != null)
     result.top_k = params.top_k;
   if (params.top_p != null)
@@ -40,7 +40,7 @@ function parametersFromCohere(params) {
   if (params.max_tokens != null)
     result.max_tokens = params.max_tokens;
   if (params.temperature != null)
-    result.temperature = params.temperature * 0.4;
+    result.temperature = Math.max(0, Math.min(params.temperature * 0.4, 2));
   if (params.k != null) {
     result.top_k = params.k;
   }
@@ -52,9 +52,15 @@ function parametersFromCohere(params) {
       result.top_p = 1;
   }
   if (params.frequency_penalty != null)
-    result.frequency_penalty = params.frequency_penalty * 4 - 2;
+    result.frequency_penalty = Math.max(
+      -2,
+      Math.min(params.frequency_penalty * 4 - 2, 2)
+    );
   if (params.presence_penalty != null)
-    result.presence_penalty = params.presence_penalty * 4 - 2;
+    result.presence_penalty = Math.max(
+      -2,
+      Math.min(params.presence_penalty * 4 - 2, 2)
+    );
   if (Array.isArray(params.stop_sequences) && params.stop_sequences.length)
     result.stop = params.stop_sequences;
   if (params.stream != null)

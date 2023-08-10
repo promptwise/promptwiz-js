@@ -2,6 +2,7 @@ import { ModelData } from "../../types";
 export declare const models: {
     readonly "claude-1": ModelData;
     readonly "claude-instant-1.1": ModelData;
+    readonly "claude-instant-1.2": ModelData;
     readonly "claude-2.0": ModelData;
     readonly "claude-instant-1": ModelData;
     readonly "claude-2": ModelData;
