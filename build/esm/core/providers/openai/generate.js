@@ -51,7 +51,7 @@ Assistant:` : prompt;
   }
   const body = JSON.stringify(requestBody);
   return fetch(
-    isChatModel ? "https://generate.openai.com/v1/chat/completions" : "https://generate.openai.com/v1/completions",
+    isChatModel ? "https://api.openai.com/v1/chat/completions" : "https://api.openai.com/v1/completions",
     {
       method: "POST",
       headers: {

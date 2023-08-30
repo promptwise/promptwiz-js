@@ -50,7 +50,7 @@ describe("OpenAI provider", () => {
 
       // Expecting the fetch to have been called with the converted chat message.
       expect(fetch).toHaveBeenCalledWith(
-        "https://generate.openai.com/v1/chat/completions",
+        "https://api.openai.com/v1/chat/completions",
         expect.objectContaining({
           body: expect.stringContaining(
             `{\"model\":\"gpt-3.5-turbo\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}]}`
@@ -88,7 +88,7 @@ describe("OpenAI provider", () => {
 
       // Expecting the fetch to have been called with the converted chat message.
       expect(fetch).toHaveBeenCalledWith(
-        "https://generate.openai.com/v1/completions",
+        "https://api.openai.com/v1/completions",
         expect.objectContaining({
           body: expect.stringContaining("User: Hello\\n\\nAssistant:"),
         })
@@ -121,7 +121,7 @@ describe("OpenAI provider", () => {
 
       // Expecting the fetch to have been called with the simple text prompt.
       expect(fetch).toHaveBeenCalledWith(
-        "https://generate.openai.com/v1/completions",
+        "https://api.openai.com/v1/completions",
         expect.objectContaining({
           body: expect.stringContaining("Test prompt"),
         })
@@ -155,7 +155,7 @@ describe("OpenAI provider", () => {
       const result = await openai.generate(defaultParams);
       // Expecting the fetch to have been called with the simple text prompt.
       expect(fetch).toHaveBeenCalledWith(
-        "https://generate.openai.com/v1/chat/completions",
+        "https://api.openai.com/v1/chat/completions",
         expect.objectContaining({
           body: expect.stringContaining(
             `{\"model\":\"gpt-3.5-turbo\",\"messages\":[{\"role\":\"system\",\"content\":\"Test prompt\"}]}`
@@ -420,7 +420,7 @@ describe("OpenAI provider", () => {
         inputs: { my_name: "my little friend" },
       });
       expect(fetch).toHaveBeenCalledWith(
-        "https://generate.openai.com/v1/chat/completions",
+        "https://api.openai.com/v1/chat/completions",
         expect.objectContaining({
           body: expect.stringContaining("Say hello to my little friend!"),
         })
