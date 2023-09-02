@@ -86,6 +86,7 @@ Assistant:` : prompt;
     {
       method: "POST",
       headers: {
+        "accept": "application/json",
         "content-type": "application/json",
         authorization: `Bearer ${access_token}`
       },

@@ -49,12 +49,13 @@ ${requestBody.prompt}` : `
 Human: ${requestBody.prompt}`;
   }
   const body = JSON.stringify(requestBody);
-  return fetch("https://generate.anthropic.com/v1/complete", {
+  return fetch("https://api.anthropic.com/v1/complete", {
     method: "POST",
     headers: {
+      "accept": "application/json",
       "content-type": "application/json",
       "anthropic-version": "2023-06-01",
-      "x-generate-key": access_token
+      "x-api-key": access_token
     },
     signal,
     body

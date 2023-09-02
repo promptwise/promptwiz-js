@@ -57,6 +57,7 @@ export const generate: ProviderGenerate<
     {
       method: "POST",
       headers: {
+        "accept": "application/json",
         "content-type": "application/json",
         authorization: `Bearer ${access_token}`,
       },

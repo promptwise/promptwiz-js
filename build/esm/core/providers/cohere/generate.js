@@ -48,9 +48,10 @@ const generate = ({ model, access_token, parameters, prompt, signal }) => {
 
 Assistant:` : prompt;
   const body = JSON.stringify(requestBody);
-  return fetch("https://generate.cohere.com/v1/generate", {
+  return fetch("https://api.cohere.com/v1/generate", {
     method: "POST",
     headers: {
+      "accept": "application/json",
       "content-type": "application/json",
       authorization: `Bearer ${access_token}`,
       "Cohere-Version": "2022-12-06"

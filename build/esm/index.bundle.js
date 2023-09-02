@@ -422,6 +422,7 @@ Assistant:` : prompt4;
     {
       method: "POST",
       headers: {
+        "accept": "application/json",
         "content-type": "application/json",
         authorization: `Bearer ${access_token}`
       },
@@ -780,9 +781,10 @@ var generate2 = ({ model, access_token, parameters: parameters4, prompt: prompt4
 
 Assistant:` : prompt4;
   const body = JSON.stringify(requestBody);
-  return fetch("https://generate.cohere.com/v1/generate", {
+  return fetch("https://api.cohere.com/v1/generate", {
     method: "POST",
     headers: {
+      "accept": "application/json",
       "content-type": "application/json",
       authorization: `Bearer ${access_token}`,
       "Cohere-Version": "2022-12-06"
@@ -1023,12 +1025,13 @@ ${requestBody.prompt}` : `
 Human: ${requestBody.prompt}`;
   }
   const body = JSON.stringify(requestBody);
-  return fetch("https://generate.anthropic.com/v1/complete", {
+  return fetch("https://api.anthropic.com/v1/complete", {
     method: "POST",
     headers: {
+      "accept": "application/json",
       "content-type": "application/json",
       "anthropic-version": "2023-06-01",
-      "x-generate-key": access_token
+      "x-api-key": access_token
     },
     signal,
     body
