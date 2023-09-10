@@ -59,6 +59,8 @@ __export(promptwiz_exports, {
 });
 module.exports = __toCommonJS(promptwiz_exports);
 var import_getProvider = require("./getProvider");
+var import_runPrompt = require("./providers/runPrompt");
+var import_utils = require("./utils");
 function promptwiz(config) {
   config = __spreadValues({}, config);
   let is_running = false;
@@ -80,7 +82,12 @@ function promptwiz(config) {
           throw new Error("Cannot run while another prompt is already running.");
         is_running = true;
         ac = new AbortController();
-        return (0, import_getProvider.getProvider)(config.provider).run(__spreadProps(__spreadValues({}, config), { inputs })).then((res) => {
+        return (0, import_runPrompt.runPrompt)(
+          config,
+          (_config) => (0, import_getProvider.getProvider)(_config.provider).prompt(__spreadProps(__spreadValues({}, _config), {
+            prompt: inputs ? (0, import_utils.hydratePromptInputs)(_config.prompt, inputs) : _config.prompt
+          }))
+        ).then((res) => {
           is_running = false;
           return res;
         });

@@ -9,6 +9,7 @@ export async function runPrompt<O = string>(
     parser,
     signal,
     fallbacks,
+    access_token,
     ...config
   }: PromptwizConfig,
   promptRunner: ProviderPrompt
@@ -20,11 +21,15 @@ export async function runPrompt<O = string>(
   let cumulative_cost = 0;
   let run_error;
 
+  let TOKEN = access_token;
+
   let current = {
     provider: config.provider,
     model: config.model,
-    parameters: config.parameters,
+    parameters: config.parameters || {},
+    prompt: config.prompt,
   };
+  let used_fallback = false;
 
   while (++retries <= max_retries) {
     try {
@@ -32,6 +37,7 @@ export async function runPrompt<O = string>(
       const { outputs, original, usage } = await promptRunner({
         ...config,
         ...current,
+        access_token: TOKEN,
       });
       // Sum tokens here because they're truly spent once we reach this point even though we might fail to parse and end up rerunning again
       // We might fail due to parse errors cascading into others that exceed the max_retries limit.
@@ -61,6 +67,8 @@ export async function runPrompt<O = string>(
           cost: cumulative_cost,
           retries,
         },
+        used_fallback,
+        ...current,
       };
       // @ts-expect-error - parsed outputs are not typed correctly yet
       return results;
@@ -75,33 +83,38 @@ export async function runPrompt<O = string>(
         // @ts-expect-error - Doesn't everything have a constructor???
         fallbacks?.[error?.contructor.name as keyof typeof fallbacks];
       if (strategy && strategy.after >= max_retries) {
+        used_fallback = true;
         // get index of current model
         const c = strategy.models.findIndex(
           (m) => m.provider === current.provider && m.model === current.model
         );
         // grab the next model in the list, or stick to the last one if no more
-        const next =
+        const _next =
           strategy.models[Math.min(c + 1, strategy.models.length - 1)];
-        let parameters = next.parameters;
+        let parameters = _next.parameters;
         if (!parameters) {
           // if no fallback parameters defined then prefer to use existing params if the providers are the same
           // if the provider is different we'll convert the parameters found in the config
           parameters =
-            next.provider === config.provider
+            _next.provider === config.provider
               ? config.parameters
-              : next.provider === current.provider
+              : _next.provider === current.provider
               ? current.parameters
               : config.parameters
-              ? getProvider(next.provider).parametersFromProvider(
+              ? getProvider(_next.provider).parametersFromProvider(
                   config.provider,
                   config.parameters
                 )
               : undefined;
         }
+        const { access_token:token, ...next } = _next;
+        TOKEN = token;
         current = {
+          ...next,
           provider: next.provider,
           model: next.model,
-          parameters,
+          parameters: parameters || {},
+          prompt: next.prompt || current.prompt,
         };
         continue;
       }
@@ -133,5 +146,7 @@ export async function runPrompt<O = string>(
       cost: cumulative_cost,
       retries,
     },
+    used_fallback,
+    ...current,
   };
 }

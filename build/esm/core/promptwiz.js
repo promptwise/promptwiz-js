@@ -18,6 +18,8 @@ var __spreadValues = (a, b) => {
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 import { getProvider } from "./getProvider";
+import { runPrompt } from "./providers/runPrompt";
+import { hydratePromptInputs } from "./utils";
 function promptwiz(config) {
   config = __spreadValues({}, config);
   let is_running = false;
@@ -38,7 +40,12 @@ function promptwiz(config) {
         throw new Error("Cannot run while another prompt is already running.");
       is_running = true;
       ac = new AbortController();
-      return getProvider(config.provider).run(__spreadProps(__spreadValues({}, config), { inputs })).then((res) => {
+      return runPrompt(
+        config,
+        (_config) => getProvider(_config.provider).prompt(__spreadProps(__spreadValues({}, _config), {
+          prompt: inputs ? hydratePromptInputs(_config.prompt, inputs) : _config.prompt
+        }))
+      ).then((res) => {
         is_running = false;
         return res;
       });

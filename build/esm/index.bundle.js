@@ -518,13 +518,15 @@ async function runPrompt(_a, promptRunner) {
     retry_if_parser_fails = true,
     parser,
     signal,
-    fallbacks
+    fallbacks,
+    access_token
   } = _b, config = __objRest(_b, [
     "max_retries",
     "retry_if_parser_fails",
     "parser",
     "signal",
-    "fallbacks"
+    "fallbacks",
+    "access_token"
   ]);
   let retries = -1;
   let delay = 0;
@@ -532,20 +534,25 @@ async function runPrompt(_a, promptRunner) {
   let cumulative_output_tokens = 0;
   let cumulative_cost = 0;
   let run_error;
+  let TOKEN = access_token;
   let current = {
     provider: config.provider,
     model: config.model,
-    parameters: config.parameters
+    parameters: config.parameters || {},
+    prompt: config.prompt
   };
+  let used_fallback = false;
   while (++retries <= max_retries) {
     try {
       if (signal == null ? void 0 : signal.aborted)
         throw new AbortError();
-      const { outputs, original, usage } = await promptRunner(__spreadValues(__spreadValues({}, config), current));
+      const { outputs, original, usage } = await promptRunner(__spreadProps(__spreadValues(__spreadValues({}, config), current), {
+        access_token: TOKEN
+      }));
       cumulative_input_tokens += usage.input_tokens;
       cumulative_output_tokens += usage.output_tokens;
       cumulative_cost += usage.cost;
-      const results = {
+      const results = __spreadValues({
         outputs: parser ? outputs.map((o) => {
           try {
             const content = parser(o.content);
@@ -562,8 +569,9 @@ async function runPrompt(_a, promptRunner) {
           output_tokens: cumulative_output_tokens,
           cost: cumulative_cost,
           retries
-        }
-      };
+        },
+        used_fallback
+      }, current);
       return results;
     } catch (error) {
       if (error instanceof AbortError || (signal == null ? void 0 : signal.aborted)) {
@@ -571,22 +579,26 @@ async function runPrompt(_a, promptRunner) {
       }
       let strategy = fallbacks == null ? void 0 : fallbacks[error == null ? void 0 : error.contructor.name];
       if (strategy && strategy.after >= max_retries) {
+        used_fallback = true;
         const c = strategy.models.findIndex(
           (m) => m.provider === current.provider && m.model === current.model
         );
-        const next = strategy.models[Math.min(c + 1, strategy.models.length - 1)];
-        let parameters4 = next.parameters;
+        const _next = strategy.models[Math.min(c + 1, strategy.models.length - 1)];
+        let parameters4 = _next.parameters;
         if (!parameters4) {
-          parameters4 = next.provider === config.provider ? config.parameters : next.provider === current.provider ? current.parameters : config.parameters ? getProvider(next.provider).parametersFromProvider(
+          parameters4 = _next.provider === config.provider ? config.parameters : _next.provider === current.provider ? current.parameters : config.parameters ? getProvider(_next.provider).parametersFromProvider(
             config.provider,
             config.parameters
           ) : void 0;
         }
-        current = {
+        const _a2 = _next, { access_token: token } = _a2, next = __objRest(_a2, ["access_token"]);
+        TOKEN = token;
+        current = __spreadProps(__spreadValues({}, next), {
           provider: next.provider,
           model: next.model,
-          parameters: parameters4
-        };
+          parameters: parameters4 || {},
+          prompt: next.prompt || current.prompt
+        });
         continue;
       }
       if (retries < max_retries && error instanceof RateLimitError) {
@@ -600,7 +612,7 @@ async function runPrompt(_a, promptRunner) {
       }
     }
   }
-  return {
+  return __spreadValues({
     outputs: [],
     original: null,
     error: run_error,
@@ -609,8 +621,9 @@ async function runPrompt(_a, promptRunner) {
       output_tokens: cumulative_output_tokens,
       cost: cumulative_cost,
       retries
-    }
-  };
+    },
+    used_fallback
+  }, current);
 }
 
 // src/core/providers/openai/run.ts
@@ -1203,7 +1216,12 @@ function promptwiz(config) {
         throw new Error("Cannot run while another prompt is already running.");
       is_running = true;
       ac = new AbortController();
-      return getProvider(config.provider).run(__spreadProps(__spreadValues({}, config), { inputs })).then((res) => {
+      return runPrompt(
+        config,
+        (_config) => getProvider(_config.provider).prompt(__spreadProps(__spreadValues({}, _config), {
+          prompt: inputs ? hydratePromptInputs(_config.prompt, inputs) : _config.prompt
+        }))
+      ).then((res) => {
         is_running = false;
         return res;
       });
@@ -1211,6 +1229,110 @@ function promptwiz(config) {
   };
   return promptwizInstance;
 }
+
+// src/core/fallbacks.ts
+var fastest = {
+  after_errors: 1,
+  models: [
+    { provider: "cohere", model: "command-light" },
+    { provider: "cohere", model: "command-light-nightly" },
+    { provider: "cohere", model: "command" },
+    { provider: "cohere", model: "command-nightly" },
+    { provider: "anthropic", model: "claude-instant-1" },
+    { provider: "anthropic", model: "claude-instant-1.1" },
+    { provider: "openai", model: "text-davinci-002" },
+    { provider: "openai", model: "text-davinci-003" },
+    { provider: "openai", model: "gpt-3.5-turbo" },
+    { provider: "openai", model: "gpt-3.5-turbo-0301" },
+    { provider: "openai", model: "gpt-3.5-turbo-16k" },
+    { provider: "openai", model: "gpt-3.5-turbo-16k-0613" },
+    { provider: "openai", model: "gpt-4" },
+    { provider: "openai", model: "gpt-4-0613" },
+    { provider: "openai", model: "gpt-4-0314" },
+    { provider: "openai", model: "gpt-4-32k" },
+    { provider: "openai", model: "gpt-4-32k-0613" },
+    { provider: "openai", model: "gpt-4-32k-0314" },
+    { provider: "anthropic", model: "claude-1" },
+    { provider: "anthropic", model: "claude-2" },
+    { provider: "anthropic", model: "claude-2.0" }
+  ]
+};
+var cheapest = {
+  after_errors: 2,
+  models: [
+    { provider: "openai", model: "gpt-3.5-turbo-instruct" },
+    { provider: "anthropic", model: "claude-instant-1" },
+    { provider: "anthropic", model: "claude-instant-1.1" },
+    { provider: "openai", model: "gpt-3.5-turbo-0301" },
+    { provider: "openai", model: "gpt-3.5-turbo" },
+    { provider: "openai", model: "gpt-3.5-turbo-16k-0613" },
+    { provider: "anthropic", model: "claude-1" },
+    { provider: "anthropic", model: "claude-2.0" },
+    { provider: "anthropic", model: "claude-2" },
+    { provider: "cohere", model: "command" },
+    { provider: "cohere", model: "command-light" },
+    { provider: "cohere", model: "command-nightly" },
+    { provider: "cohere", model: "command-light-nightly" },
+    { provider: "openai", model: "text-davinci-002" },
+    { provider: "openai", model: "text-davinci-003" },
+    { provider: "openai", model: "gpt-4-0613" },
+    { provider: "openai", model: "gpt-4" },
+    { provider: "openai", model: "gpt-4-0314" },
+    { provider: "openai", model: "gpt-4-32k-0613" },
+    { provider: "openai", model: "gpt-4-32k-0314" },
+    { provider: "openai", model: "gpt-4-32k" }
+  ]
+};
+var strongest = {
+  after_errors: 3,
+  models: [
+    { provider: "openai", model: "gpt-4-32k" },
+    { provider: "openai", model: "gpt-4-32k-0314" },
+    { provider: "openai", model: "gpt-4-32k-0613" },
+    { provider: "openai", model: "gpt-4" },
+    { provider: "openai", model: "gpt-4-0613" },
+    { provider: "openai", model: "gpt-4-0314" },
+    { provider: "openai", model: "gpt-3.5-turbo" },
+    { provider: "openai", model: "gpt-3.5-turbo-16k-0613" },
+    { provider: "openai", model: "gpt-3.5-turbo-0301" },
+    { provider: "openai", model: "text-davinci-003" },
+    { provider: "openai", model: "text-davinci-002" },
+    { provider: "anthropic", model: "claude-2" },
+    { provider: "anthropic", model: "claude-2.0" },
+    { provider: "anthropic", model: "claude-1" },
+    { provider: "anthropic", model: "claude-instant-1" },
+    { provider: "anthropic", model: "claude-instant-1.1" },
+    { provider: "cohere", model: "command-nightly" },
+    { provider: "cohere", model: "command" },
+    { provider: "cohere", model: "command-light-nightly" },
+    { provider: "cohere", model: "command-light" }
+  ]
+};
+var largest = {
+  after_errors: 3,
+  models: [
+    { provider: "cohere", model: "command-light" },
+    { provider: "cohere", model: "command-light-nightly" },
+    { provider: "cohere", model: "command" },
+    { provider: "cohere", model: "command-nightly" },
+    { provider: "anthropic", model: "claude-instant-1.1" },
+    { provider: "anthropic", model: "claude-instant-1" },
+    { provider: "anthropic", model: "claude-1" },
+    { provider: "anthropic", model: "claude-2.0" },
+    { provider: "anthropic", model: "claude-2" },
+    { provider: "openai", model: "text-davinci-002" },
+    { provider: "openai", model: "text-davinci-003" },
+    { provider: "openai", model: "gpt-3.5-turbo-0301" },
+    { provider: "openai", model: "gpt-3.5-turbo-16k-0613" },
+    { provider: "openai", model: "gpt-3.5-turbo" },
+    { provider: "openai", model: "gpt-4-0314" },
+    { provider: "openai", model: "gpt-4-0613" },
+    { provider: "openai", model: "gpt-4" },
+    { provider: "openai", model: "gpt-4-32k-0613" },
+    { provider: "openai", model: "gpt-4-32k-0314" },
+    { provider: "openai", model: "gpt-4-32k" }
+  ]
+};
 export {
   AbortError,
   AuthorizationError,
@@ -1222,13 +1344,17 @@ export {
   ServerError,
   ServiceQuotaError,
   anthropic,
+  cheapest,
   cohere,
   convertChatMessagesToText,
   convertTextToChatMessages,
+  fastest,
   getProvider,
   hydratePromptInputs,
+  largest,
   openai,
   parseTemplateStrings,
   promptwiz,
+  strongest,
   template_regex
 };

@@ -1,6 +1,8 @@
 import { FallbackErrors } from "./errors";
 import { Tiktoken } from "./providers/tiktoken";
 
+export type ProviderName = "openai" | "cohere" | "anthropic";
+
 export type PromptOutput<T = string> = {
   content: T;
   tokens: number;
@@ -19,6 +21,11 @@ export type PromptwizOutput<O = string, T = any> = {
   original: T; // Original result of the provider's prompt generate
   error?: Error;
   usage: PromptUsage;
+  used_fallback: boolean;
+  provider: ProviderName;
+  model: string;
+  prompt: Prompt;
+  parameters: Record<string, unknown>;
 };
 
 export type ChatPrompt = Array<{ role: string; content: string }>;
@@ -31,22 +38,7 @@ export type PromptwizControllerConfig<O> = {
   signal?: AbortSignal;
 };
 
-export type ProviderName = "openai" | "cohere" | "anthropic";
-
-export type FallbackStrategy = {
-  // how many errors before we bail and try a different model?
-  after: number;
-  // explicit list of backup providers and models
-  models: Array<{
-    provider: ProviderName;
-    model: string;
-    parameters?: Record<string, unknown>;
-  }>;
-};
-
-export type Fallbacks = Record<FallbackErrors, null | FallbackStrategy>;
-
-export type PromptwizPromptConfig<
+export type PromptwizPromptBase<
   M extends string = string,
   P = Record<string, unknown>
 > = {
@@ -54,6 +46,22 @@ export type PromptwizPromptConfig<
   access_token: string;
   model: M;
   parameters?: P;
+  prompt?: Prompt;
+};
+
+export type FallbackStrategy = {
+  // how many errors before we bail and try a different model?
+  after: number;
+  // explicit list of backup providers and models
+  models: Array<PromptwizPromptBase>;
+};
+
+export type Fallbacks = Record<FallbackErrors, null | FallbackStrategy>;
+
+export type PromptwizPromptConfig<
+  M extends string = string,
+  P = Record<string, unknown>
+> = Omit<PromptwizPromptBase<M, P>, "prompt"> & {
   prompt: Prompt;
   fallbacks?: Fallbacks;
 };
@@ -130,9 +138,11 @@ export type ProviderPrompt<
 > = (
   config: Pick<
     PromptwizConfig<M, P, string>,
-    "model" | "access_token" | "parameters" | "prompt" | "signal"
+    "provider" | "model" | "access_token" | "parameters" | "prompt" | "signal"
   >
-) => Promise<PromptwizOutput<string, T>>;
+) => Promise<
+  Pick<PromptwizOutput<string, T>, "outputs" | "original" | "usage">
+>;
 
 export type ProviderRun<
   M extends string = string,

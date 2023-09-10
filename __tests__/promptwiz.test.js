@@ -7,17 +7,17 @@ const { RateLimitError, ParserError } = require("../build/cjs/core/errors");
 
 jest.mock("../build/cjs/core/getProvider");
 
-const mockRun = jest.fn(() => Promise.resolve("output"));
+const mockPrompt = jest.fn(() => Promise.resolve("output"));
 
 beforeAll(() => {
   // NOTE: Using provider names as a way to get different mock behavior from a provider
   getProviderModule.getProvider.mockImplementation((name) => ({
-    run: mockRun,
+    prompt: mockPrompt,
   }));
 });
 
 beforeEach(() => {
-  mockRun.mockClear();
+  mockPrompt.mockClear();
 });
 
 describe("promptwiz", () => {
@@ -63,23 +63,23 @@ describe("promptwiz", () => {
       expect(instance.is_running).toBe(false);
     });
 
-    test("calls getProvider and provider.run with correct args", async () => {
+    test("calls getProvider and provider.prompt with correct args", async () => {
       const inputs = { my_name: "input value" };
       const instance = promptwiz({
         provider: "normal",
         access_token: "foobar",
         model: "model",
-        prompt: "Say hello to <my_name>!",
+        prompt: "Say hello to input value!",
       });
 
       await instance.run(inputs);
       expect(getProviderModule.getProvider).toHaveBeenCalledWith("normal");
-      expect(mockRun).toHaveBeenCalledWith({
+      expect(mockPrompt).toHaveBeenCalledWith({
         provider: "normal",
         access_token: "foobar",
         model: "model",
-        prompt: "Say hello to <my_name>!",
-        inputs,
+        parameters: {},
+        prompt: "Say hello to input value!",
       });
     });
   });
@@ -103,12 +103,12 @@ describe("promptwiz", () => {
     });
 
     await instance.run({ my_name: "my little friend" });
-    expect(mockRun).toHaveBeenLastCalledWith({
+    expect(mockPrompt).toHaveBeenLastCalledWith({
       provider: "normal",
       access_token: "foobar2",
       model: "modelo",
+      parameters: {},
       prompt: "Say hello to someone very special to me, Mr. Frog.",
-      inputs: { my_name: "my little friend" },
     });
   });
 });

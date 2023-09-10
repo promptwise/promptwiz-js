@@ -12,7 +12,7 @@ export class ClientError extends Error {
 }
 
 export class LengthError extends Error {
-  // The request made was too larger for the given model
+  // The request made was too large for the given model
 }
 
 export class RateLimitError extends Error {

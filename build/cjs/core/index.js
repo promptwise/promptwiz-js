@@ -21,3 +21,4 @@ __reExport(core_exports, require("./providers"), module.exports);
 __reExport(core_exports, require("./utils"), module.exports);
 __reExport(core_exports, require("./types"), module.exports);
 __reExport(core_exports, require("./errors"), module.exports);
+__reExport(core_exports, require("./fallbacks"), module.exports);

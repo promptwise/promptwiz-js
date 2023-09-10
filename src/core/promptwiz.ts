@@ -1,5 +1,7 @@
 import { Promptwiz, PromptwizConfig, PromptwizOutput } from "./types";
 import { getProvider } from "./getProvider";
+import { runPrompt } from "./providers/runPrompt";
+import { hydratePromptInputs } from "./utils";
 
 export function promptwiz<Inputs extends Record<string, string>>(
   config: PromptwizConfig
@@ -26,12 +28,18 @@ export function promptwiz<Inputs extends Record<string, string>>(
         throw new Error("Cannot run while another prompt is already running.");
       is_running = true;
       ac = new AbortController();
-      return getProvider(config.provider)
-        .run({ ...config, inputs })
-        .then((res) => {
-          is_running = false;
-          return res;
-        });
+
+      return runPrompt(config, (_config) =>
+        getProvider(_config.provider).prompt({
+          ..._config,
+          prompt: inputs
+            ? hydratePromptInputs(_config.prompt, inputs)
+            : _config.prompt,
+        })
+      ).then((res) => {
+        is_running = false;
+        return res;
+      });
     },
     // stream(
     //   inputsOrHandler: Inputs | StreamHandler,
