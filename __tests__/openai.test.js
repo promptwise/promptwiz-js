@@ -505,6 +505,9 @@ describe("OpenAI provider", () => {
       expect(result.outputs[0].content).toMatchObject({
         reply: "Hello, little friend! How are you doing today?",
       });
+      expect(result.outputs[0].original).toBe(
+        '{"reply": "Hello, little friend! How are you doing today?" }'
+      );
     });
 
     test("will retry if parser throws error and records cumaltive tokens used across N outputs", async () => {
@@ -561,6 +564,9 @@ describe("OpenAI provider", () => {
       expect(result.outputs[0].content).toMatchObject({
         reply: "Hello, little friend! How are you doing today?",
       });
+      expect(result.outputs[0].original).toBe(
+        '{"reply": "Hello, little friend! How are you doing today?" }'
+      );
       // Totals across all successful runs (because we'll be billed regardless of whether or not our downstream processes like the output)
       expect(result.usage.input_tokens).toBe(4);
       expect(result.usage.output_tokens).toBe(15);
@@ -577,14 +583,14 @@ describe("OpenAI provider", () => {
     });
     test("decode", () => {
       const tokenizer = openai.tokenizer("gpt-3.5-turbo");
-      expect(tokenizer.decode([5963, 553, 757, 0, 551, 35,])).toBe(
+      expect(tokenizer.decode([5963, 553, 757, 0, 551, 35])).toBe(
         "tokenize me! :D"
       );
     });
     test("decodeTokens", () => {
       const tokenizer = openai.tokenizer("gpt-3.5-turbo");
       expect(
-        tokenizer.decodeTokens([5963, 553, 757, 0, 551, 35,])
+        tokenizer.decodeTokens([5963, 553, 757, 0, 551, 35])
       ).toMatchObject(["token", "ize", " me", "!", " :", "D"]);
     });
     test("decodeToken", () => {

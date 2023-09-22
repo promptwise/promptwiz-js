@@ -50,7 +50,7 @@ export async function runPrompt<O = string>(
           ? outputs.map((o) => {
               try {
                 const content = parser(o.content);
-                return { ...o, content };
+                return { ...o, content, original: o.content };
               } catch (err) {
                 throw new errors.ParserError(
                   err instanceof Error
@@ -107,7 +107,7 @@ export async function runPrompt<O = string>(
                 )
               : undefined;
         }
-        const { access_token:token, ...next } = _next;
+        const { access_token: token, ...next } = _next;
         TOKEN = token;
         current = {
           ...next,

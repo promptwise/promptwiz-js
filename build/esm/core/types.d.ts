@@ -2,6 +2,7 @@ import { FallbackErrors } from "./errors";
 import { Tiktoken } from "./providers/tiktoken";
 export type ProviderName = "openai" | "cohere" | "anthropic";
 export type PromptOutput<T = string> = {
+    original?: string;
     content: T;
     tokens: number;
     truncated: boolean;

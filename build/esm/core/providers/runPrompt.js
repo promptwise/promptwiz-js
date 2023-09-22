@@ -75,7 +75,7 @@ async function runPrompt(_a, promptRunner) {
         outputs: parser ? outputs.map((o) => {
           try {
             const content = parser(o.content);
-            return __spreadProps(__spreadValues({}, o), { content });
+            return __spreadProps(__spreadValues({}, o), { content, original: o.content });
           } catch (err) {
             throw new errors.ParserError(
               err instanceof Error ? err.message : "Unexpected error parseing the model output"

@@ -4,6 +4,7 @@ import { Tiktoken } from "./providers/tiktoken";
 export type ProviderName = "openai" | "cohere" | "anthropic";
 
 export type PromptOutput<T = string> = {
+  original?: string; // only populated if the output was parsed
   content: T;
   tokens: number;
   truncated: boolean;

@@ -315,6 +315,9 @@ describe("Anthropic provider", () => {
       expect(result.outputs[0].content).toMatchObject({
         reply: "Hello, little friend! How are you doing today?",
       });
+      expect(result.outputs[0].original).toBe(
+        '{"reply": "Hello, little friend! How are you doing today?" }'
+      );
     });
 
     test("will retry if parser throws error and records cumaltive tokens used across N outputs", async () => {
@@ -351,6 +354,9 @@ describe("Anthropic provider", () => {
       expect(result.outputs[0].content).toMatchObject({
         reply: "Hello, little friend! How are you doing today?",
       });
+      expect(result.outputs[0].original).toBe(
+        '{"reply": "Hello, little friend! How are you doing today?" }'
+      );
       // Totals across all successful runs (because we'll be billed regardless of whether or not our downstream processes like the output)
       expect(result.usage.input_tokens).toBe(14);
       expect(result.usage.output_tokens).toBe(20);
@@ -373,9 +379,13 @@ describe("Anthropic provider", () => {
     });
     test("decodeTokens", () => {
       const tokenizer = anthropic.tokenizer("claude-instant-1");
-      expect(
-        tokenizer.decodeTokens([20639, 494, 5, 597, 40])
-      ).toMatchObject(["tokenize", " me", "!", " :", "D"]);
+      expect(tokenizer.decodeTokens([20639, 494, 5, 597, 40])).toMatchObject([
+        "tokenize",
+        " me",
+        "!",
+        " :",
+        "D",
+      ]);
     });
     test("decodeToken", () => {
       const tokenizer = anthropic.tokenizer("claude-instant-1");
@@ -461,10 +471,7 @@ describe("Anthropic provider", () => {
         stream: true,
       };
 
-      const result = anthropic.parametersFromProvider(
-        "cohere",
-        cohereParams
-      );
+      const result = anthropic.parametersFromProvider("cohere", cohereParams);
 
       expect(result).toEqual({
         max_tokens_to_sample: 10,
