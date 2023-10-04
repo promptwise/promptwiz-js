@@ -26,10 +26,10 @@ __export(models_exports, {
 module.exports = __toCommonJS(models_exports);
 var import_shared = require("../shared");
 const models = {
-  command: ["cohere_75k", 2048, 1.5, 1.5],
-  "command-light": ["cohere_75k", 2048, 1.5, 1.5],
-  "command-nightly": ["cohere_75k", 2048, 1.5, 1.5],
-  "command-light-nightly": ["cohere_75k", 2048, 1.5, 1.5]
+  command: ["cohere_75k", 2048, 0.15, 0.2],
+  "command-light": ["cohere_75k", 2048, 0.15, 0.2],
+  "command-nightly": ["cohere_75k", 2048, 0.15, 0.2],
+  "command-light-nightly": ["cohere_75k", 2048, 0.15, 0.2]
 };
 const promptDollarCostForModel = (model, input_tokens, output_tokens) => (0, import_shared._promptDollarCostForModel)(models, model, input_tokens, output_tokens);
 const maxTokensForModel = (model) => (0, import_shared._maxTokensForModel)(models, model);

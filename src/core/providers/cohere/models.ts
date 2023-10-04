@@ -7,11 +7,11 @@ import {
 
 export const models = {
   // Current model checkpoints
-  command: ["cohere_75k", 2048, 1.5, 1.5] as ModelData,
-  "command-light": ["cohere_75k", 2048, 1.5, 1.5] as ModelData,
+  command: ["cohere_75k", 2048, 0.15, 0.2] as ModelData,
+  "command-light": ["cohere_75k", 2048, 0.15, 0.2] as ModelData,
   // Current models
-  "command-nightly": ["cohere_75k", 2048, 1.5, 1.5] as ModelData,
-  "command-light-nightly": ["cohere_75k", 2048, 1.5, 1.5] as ModelData,
+  "command-nightly": ["cohere_75k", 2048, 0.15, 0.2] as ModelData,
+  "command-light-nightly": ["cohere_75k", 2048, 0.15, 0.2] as ModelData,
 } as const;
 
 export type CohereModel = keyof typeof models;

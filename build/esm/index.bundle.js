@@ -725,10 +725,10 @@ var openai = {
 
 // src/core/providers/cohere/models.ts
 var models2 = {
-  command: ["cohere_75k", 2048, 1.5, 1.5],
-  "command-light": ["cohere_75k", 2048, 1.5, 1.5],
-  "command-nightly": ["cohere_75k", 2048, 1.5, 1.5],
-  "command-light-nightly": ["cohere_75k", 2048, 1.5, 1.5]
+  command: ["cohere_75k", 2048, 0.15, 0.2],
+  "command-light": ["cohere_75k", 2048, 0.15, 0.2],
+  "command-nightly": ["cohere_75k", 2048, 0.15, 0.2],
+  "command-light-nightly": ["cohere_75k", 2048, 0.15, 0.2]
 };
 var promptDollarCostForModel2 = (model, input_tokens, output_tokens) => _promptDollarCostForModel(models2, model, input_tokens, output_tokens);
 var maxTokensForModel2 = (model) => _maxTokensForModel(models2, model);

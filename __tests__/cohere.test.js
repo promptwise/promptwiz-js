@@ -531,20 +531,20 @@ describe("Cohere provider", () => {
       expect(cohere.promptDollarCostForModel("command", -10, 0)).toBe(0);
       expect(cohere.promptDollarCostForModel("command", -10, -10)).toBe(0);
       expect(cohere.promptDollarCostForModel("command", 0.5, 0.5)).toBeCloseTo(
-        0.00003,
+        0.0000035,
         6
       );
       expect(cohere.promptDollarCostForModel("command", 0, 100000)).toBeCloseTo(
-        1.5,
+        0.2,
         6
       );
       expect(cohere.promptDollarCostForModel("command", 100000, 0)).toBeCloseTo(
-        1.5,
+        0.15,
         6
       );
       expect(
         cohere.promptDollarCostForModel("command", 100000, 100000)
-      ).toBeCloseTo(3, 6);
+      ).toBeCloseTo(0.35, 6);
     });
   });
   describe("parametersFromProvider", () => {
