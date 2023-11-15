@@ -623,7 +623,6 @@ describe("OpenAI provider", () => {
   describe("util methods", () => {
     test("maxTokensForModel", () => {
       expect(openai.maxTokensForModel("gpt-3.5-turbo")).toBe(4096);
-      expect(openai.maxTokensForModel("text-davinci-003")).toBe(4097);
       expect(openai.maxTokensForModel("text-embedding-ada-002")).toBe(2049);
       expect(openai.maxTokensForModel("gpt-4-32k")).toBe(32768);
     });
@@ -645,16 +644,16 @@ describe("OpenAI provider", () => {
       );
       expect(
         openai.promptDollarCostForModel("gpt-3.5-turbo", 0.5, 0.5)
-      ).toBeCloseTo(0.0000035, 6);
+      ).toBeCloseTo(0.000003, 6);
       expect(
         openai.promptDollarCostForModel("gpt-3.5-turbo", 0, 100000)
       ).toBeCloseTo(0.2, 6);
       expect(
         openai.promptDollarCostForModel("gpt-3.5-turbo", 100000, 0)
-      ).toBeCloseTo(0.15, 6);
+      ).toBeCloseTo(0.1, 6);
       expect(
         openai.promptDollarCostForModel("gpt-3.5-turbo", 100000, 100000)
-      ).toBeCloseTo(0.35, 6);
+      ).toBeCloseTo(0.3, 6);
     });
   });
   describe("parametersFromProvider", () => {

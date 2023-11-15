@@ -11,7 +11,7 @@ export const prompt: ProviderPrompt<
 > = (config) =>
   generate(config).then((original) => {
     const isChatModel =
-      config.model.includes("gpt-3.5") || config.model.includes("gpt-4");
+      (config.model.includes("gpt-3.5") || config.model.includes("gpt-4")) && !config.model.includes("instruct");
     const { choices, usage } = original;
     // If only a single output then we can just piggy-back on OpenAI's token count
     if (choices.length === 1) {

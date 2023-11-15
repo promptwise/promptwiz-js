@@ -25,7 +25,7 @@ var import_models = require("./models");
 var import_tokenizer = require("./tokenizer");
 var import_generate = require("./generate");
 const prompt = (config) => (0, import_generate.generate)(config).then((original) => {
-  const isChatModel = config.model.includes("gpt-3.5") || config.model.includes("gpt-4");
+  const isChatModel = (config.model.includes("gpt-3.5") || config.model.includes("gpt-4")) && !config.model.includes("instruct");
   const { choices, usage } = original;
   if (choices.length === 1) {
     return {

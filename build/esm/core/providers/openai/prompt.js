@@ -2,7 +2,7 @@ import { promptDollarCostForModel } from "./models";
 import { tokenizer } from "./tokenizer";
 import { generate } from "./generate";
 const prompt = (config) => generate(config).then((original) => {
-  const isChatModel = config.model.includes("gpt-3.5") || config.model.includes("gpt-4");
+  const isChatModel = (config.model.includes("gpt-3.5") || config.model.includes("gpt-4")) && !config.model.includes("instruct");
   const { choices, usage } = original;
   if (choices.length === 1) {
     return {
