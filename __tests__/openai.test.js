@@ -53,7 +53,7 @@ describe("OpenAI provider", () => {
         "https://api.openai.com/v1/chat/completions",
         expect.objectContaining({
           body: expect.stringContaining(
-            `{\"model\":\"gpt-3.5-turbo\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}]}`
+            `{\"model\":\"gpt-3.5-turbo\",\"stream\":false,\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}]}`
           ),
         })
       );
@@ -158,7 +158,7 @@ describe("OpenAI provider", () => {
         "https://api.openai.com/v1/chat/completions",
         expect.objectContaining({
           body: expect.stringContaining(
-            `{\"model\":\"gpt-3.5-turbo\",\"messages\":[{\"role\":\"system\",\"content\":\"Test prompt\"}]}`
+            `{\"model\":\"gpt-3.5-turbo\",\"stream\":false,\"messages\":[{\"role\":\"system\",\"content\":\"Test prompt\"}]}`
           ),
         })
       );

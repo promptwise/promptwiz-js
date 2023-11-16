@@ -1,8 +1,6 @@
 "use strict";
 var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
@@ -19,7 +17,6 @@ var __spreadValues = (a, b) => {
     }
   return a;
 };
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -58,7 +55,6 @@ __export(generate_exports, {
   generate: () => generate
 });
 module.exports = __toCommonJS(generate_exports);
-var import_utils = require("../../utils");
 var import_errors = require("../../errors");
 const generate = ({ model, access_token, parameters, prompt, signal }) => {
   if (!access_token)
@@ -66,34 +62,45 @@ const generate = ({ model, access_token, parameters, prompt, signal }) => {
       "Missing access_token required to use Cohere generate!"
     );
   const isChatPrompt = Array.isArray(prompt);
-  const requestBody = __spreadProps(__spreadValues({
-    model,
-    max_tokens: 20
-  }, parameters), {
-    truncate: "NONE",
-    return_likelihoods: "NONE"
-  });
+  const requestBody = __spreadValues({
+    model
+  }, parameters);
   if (requestBody == null ? void 0 : requestBody.stream) {
     requestBody.stream = false;
     console.warn(
       "Streaming responses not yet supported in promptwiz-js. Contributions welcome!"
     );
   }
-  requestBody.prompt = isChatPrompt ? `${(0, import_utils.convertChatMessagesToText)(prompt)}
-
-Assistant:` : prompt;
+  if (isChatPrompt) {
+    let startIndex = 0;
+    if (prompt[0].role === "system") {
+      requestBody.preamble_override = prompt[0].content;
+      startIndex = 1;
+    }
+    requestBody.chat_history = prompt.slice(startIndex, -1);
+    requestBody.message = prompt.slice(-1)[0].content;
+  } else {
+    if (!(parameters == null ? void 0 : parameters.max_tokens))
+      requestBody.max_tokens = 20;
+    requestBody.prompt = prompt;
+    requestBody.truncate = "NONE";
+    requestBody.return_likelihoods = "NONE";
+  }
   const body = JSON.stringify(requestBody);
-  return fetch("https://api.cohere.com/v1/generate", {
-    method: "POST",
-    headers: {
-      "accept": "application/json",
-      "content-type": "application/json",
-      authorization: `Bearer ${access_token}`,
-      "Cohere-Version": "2022-12-06"
-    },
-    signal,
-    body
-  }).then((resp) => assessCohereResponse(resp));
+  return fetch(
+    isChatPrompt ? "https://api.cohere.com/v1/chat" : "https://api.cohere.com/v1/generate",
+    {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        authorization: `Bearer ${access_token}`,
+        "Cohere-Version": "2022-12-06"
+      },
+      signal,
+      body
+    }
+  ).then((resp) => assessCohereResponse(resp));
 };
 function assessCohereResponse(response) {
   return __async(this, null, function* () {

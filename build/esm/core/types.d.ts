@@ -34,6 +34,7 @@ export type PromptwizControllerConfig<O> = {
     retry_if_parser_fails?: boolean;
     parser?: (output: string) => O;
     signal?: AbortSignal;
+    stream?: StreamHandler;
 };
 export type PromptwizPromptBase<M extends string = string, P = Record<string, unknown>> = {
     provider: ProviderName;
@@ -52,12 +53,18 @@ export type PromptwizPromptConfig<M extends string = string, P = Record<string, 
     fallbacks?: Fallbacks;
 };
 export type PromptwizConfig<M extends string = string, P = Record<string, unknown>, O = string> = PromptwizPromptConfig<M, P> & PromptwizControllerConfig<O>;
-export type StreamHandler = (token: string, done: boolean) => unknown;
+export type PromptwizDelta<D extends string | Partial<ChatMessage> = Partial<ChatMessage>> = Array<{
+    delta: D;
+    index: number;
+}>;
+export type StreamHandler = (delta: PromptwizDelta, done: boolean) => unknown;
 export type Promptwiz<Inputs extends Record<string, string> | void = void> = {
     readonly is_running: boolean;
     run(): PromiseLike<PromptwizOutput>;
     run(inputs: Inputs): PromiseLike<PromptwizOutput>;
     abort(): void;
+    stream(handler: StreamHandler): PromiseLike<PromptwizOutput>;
+    stream(inputs: Inputs, handler: StreamHandler): PromiseLike<PromptwizOutput>;
     config(config: Partial<PromptwizConfig>): Promptwiz<Inputs>;
 };
 export type ChatMessage = {
@@ -80,8 +87,8 @@ export type ModelData = [
     output_cents_per_kilotoken: number
 ];
 export type ProviderModelRecord = Record<string, ModelData>;
-export type ProviderGenerate<M extends string = string, P = Record<string, unknown>, T = any> = (config: Pick<PromptwizConfig<M, P, string>, "model" | "access_token" | "parameters" | "prompt" | "signal">) => Promise<T>;
-export type ProviderPrompt<M extends string = string, P = Record<string, unknown>, T = any> = (config: Pick<PromptwizConfig<M, P, string>, "provider" | "model" | "access_token" | "parameters" | "prompt" | "signal">) => Promise<Pick<PromptwizOutput<string, T>, "outputs" | "original" | "usage">>;
+export type ProviderGenerate<M extends string = string, P = Record<string, unknown>, T = any> = (config: Pick<PromptwizConfig<M, P, string>, "model" | "access_token" | "parameters" | "prompt" | "signal" | "stream">) => Promise<T>;
+export type ProviderPrompt<M extends string = string, P = Record<string, unknown>, T = any> = (config: Pick<PromptwizConfig<M, P, string>, "provider" | "model" | "access_token" | "parameters" | "prompt" | "signal" | "stream">) => Promise<Pick<PromptwizOutput<string, T>, "outputs" | "original" | "usage">>;
 export type ProviderRun<M extends string = string, P = Record<string, unknown>, T = any> = <O = any>(config: PromptwizConfig<M, P, O> & {
     inputs?: Record<string, string>;
 }) => Promise<PromptwizOutput<O, T>>;

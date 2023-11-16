@@ -437,50 +437,12 @@ var AvailabilityError = class extends Error {
 var AbortError = class extends Error {
 };
 
-// src/core/providers/openai/generate.ts
-var generate = ({ model, access_token, parameters: parameters4, prompt: prompt4, signal }) => {
-  if (!access_token)
-    throw new AuthorizationError(
-      "Missing access_token required to use OpenAI generate!"
-    );
-  const isChatPrompt = Array.isArray(prompt4);
-  const isChatModel = model.includes("gpt-3.5") || model.includes("gpt-4");
-  const requestBody = __spreadValues({
-    model
-  }, parameters4);
-  if (requestBody == null ? void 0 : requestBody.stream) {
-    requestBody.stream = false;
-    console.warn(
-      "Streaming responses not yet supported in promptwiz-js. Contributions welcome!"
-    );
-  }
-  if (isChatModel) {
-    requestBody.messages = isChatPrompt ? prompt4 : convertTextToChatMessages(prompt4);
-  } else {
-    requestBody.prompt = isChatPrompt ? `${convertChatMessagesToText(prompt4)}
-
-Assistant:` : prompt4;
-  }
-  const body = JSON.stringify(requestBody);
-  return fetch(
-    isChatModel ? "https://api.openai.com/v1/chat/completions" : "https://api.openai.com/v1/completions",
-    {
-      method: "POST",
-      headers: {
-        "accept": "application/json",
-        "content-type": "application/json",
-        authorization: `Bearer ${access_token}`
-      },
-      signal,
-      body
-    }
-  ).then((resp) => assessOpenAIResponse(resp));
-};
+// src/core/providers/openai/response.ts
 function assessOpenAIResponse(response) {
   return __async(this, null, function* () {
     var _a, _b;
-    const responseBody = yield response.json();
     if (!response.ok) {
+      const responseBody = yield response.json();
       const status = response.status;
       const message = ((_a = responseBody.error) == null ? void 0 : _a.message) || ((_b = responseBody.error) == null ? void 0 : _b.response) || response.statusText;
       switch (status) {
@@ -501,9 +463,116 @@ function assessOpenAIResponse(response) {
           throw new Error(message);
       }
     }
-    return responseBody;
+    return true;
   });
 }
+
+// src/core/providers/openai/stream.ts
+function fetchStream(streamHandler, isChat = true) {
+  return (url, init) => __async(this, null, function* () {
+    return new Promise((resolve, reject) => __async(this, null, function* () {
+      const response = yield fetch(url, init);
+      try {
+        assessOpenAIResponse(response);
+      } catch (error) {
+        reject(error);
+      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let allResponses = [];
+      function processChunk() {
+        return __async(this, null, function* () {
+          try {
+            const { done, value } = yield reader.read();
+            if (done) {
+              streamHandler([], true);
+              const combined = allResponses.reduce(
+                ({ choices }, chunk2) => {
+                  chunk2.choices.forEach(
+                    isChat ? (_a) => {
+                      var _b = _a, { delta, index } = _b, other = __objRest(_b, ["delta", "index"]);
+                      var _a2, _b2;
+                      const prev = (_a2 = choices[index]) == null ? void 0 : _a2.message;
+                      choices[index] = __spreadProps(__spreadValues(__spreadValues({}, choices[index]), other), {
+                        message: {
+                          role: (prev == null ? void 0 : prev.role) || delta.role || "assistant",
+                          content: `${prev == null ? void 0 : prev.content}${((_b2 = delta == null ? void 0 : delta.message) == null ? void 0 : _b2.content) || ""}`
+                        }
+                      });
+                    } : (_c) => {
+                      var _d = _c, { text, index } = _d, other = __objRest(_d, ["text", "index"]);
+                      var _a;
+                      choices[index] = __spreadProps(__spreadValues(__spreadValues({}, choices[index]), other), {
+                        text: `${(_a = choices[index]) == null ? void 0 : _a.text}${text || ""}`
+                      });
+                    }
+                  );
+                  return __spreadProps(__spreadValues({}, chunk2), {
+                    choices
+                  });
+                },
+                { choices: [] }
+              );
+              return resolve(combined);
+            }
+            const chunk = JSON.parse(decoder.decode(value));
+            allResponses.push(chunk);
+            streamHandler(
+              chunk.choices.map((c) => ({
+                delta: isChat ? c.delta : c.text,
+                index: c.index
+              })),
+              false
+            );
+            processChunk();
+          } catch (error) {
+            reject(error);
+          }
+        });
+      }
+      processChunk();
+    }));
+  });
+}
+
+// src/core/providers/openai/generate.ts
+var generate = ({ model, access_token, parameters: parameters4, prompt: prompt4, signal, stream }) => {
+  if (!access_token)
+    throw new AuthorizationError(
+      "Missing access_token required to use OpenAI generate!"
+    );
+  const isChatPrompt = Array.isArray(prompt4);
+  const isChatModel = model.includes("gpt-3.5") || model.includes("gpt-4");
+  const requestBody = __spreadProps(__spreadValues({
+    model
+  }, parameters4), {
+    stream: !!stream
+  });
+  if (isChatModel) {
+    requestBody.messages = isChatPrompt ? prompt4 : convertTextToChatMessages(prompt4);
+  } else {
+    requestBody.prompt = isChatPrompt ? `${convertChatMessagesToText(prompt4)}
+
+Assistant:` : prompt4;
+  }
+  const body = JSON.stringify(requestBody);
+  const url = isChatModel ? "https://api.openai.com/v1/chat/completions" : "https://api.openai.com/v1/completions";
+  const options = {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "content-type": "application/json",
+      authorization: `Bearer ${access_token}`
+    },
+    signal,
+    body
+  };
+  if (stream)
+    return fetchStream(stream, isChatModel)(url, options);
+  return fetch(url, options).then(
+    (resp) => assessOpenAIResponse(resp).then((ok) => ok && resp.json())
+  );
+};
 
 // src/core/providers/openai/prompt.ts
 var prompt = (config) => generate(config).then((original) => {
@@ -826,34 +895,45 @@ var generate2 = ({ model, access_token, parameters: parameters4, prompt: prompt4
       "Missing access_token required to use Cohere generate!"
     );
   const isChatPrompt = Array.isArray(prompt4);
-  const requestBody = __spreadProps(__spreadValues({
-    model,
-    max_tokens: 20
-  }, parameters4), {
-    truncate: "NONE",
-    return_likelihoods: "NONE"
-  });
+  const requestBody = __spreadValues({
+    model
+  }, parameters4);
   if (requestBody == null ? void 0 : requestBody.stream) {
     requestBody.stream = false;
     console.warn(
       "Streaming responses not yet supported in promptwiz-js. Contributions welcome!"
     );
   }
-  requestBody.prompt = isChatPrompt ? `${convertChatMessagesToText(prompt4)}
-
-Assistant:` : prompt4;
+  if (isChatPrompt) {
+    let startIndex = 0;
+    if (prompt4[0].role === "system") {
+      requestBody.preamble_override = prompt4[0].content;
+      startIndex = 1;
+    }
+    requestBody.chat_history = prompt4.slice(startIndex, -1);
+    requestBody.message = prompt4.slice(-1)[0].content;
+  } else {
+    if (!(parameters4 == null ? void 0 : parameters4.max_tokens))
+      requestBody.max_tokens = 20;
+    requestBody.prompt = prompt4;
+    requestBody.truncate = "NONE";
+    requestBody.return_likelihoods = "NONE";
+  }
   const body = JSON.stringify(requestBody);
-  return fetch("https://api.cohere.com/v1/generate", {
-    method: "POST",
-    headers: {
-      "accept": "application/json",
-      "content-type": "application/json",
-      authorization: `Bearer ${access_token}`,
-      "Cohere-Version": "2022-12-06"
-    },
-    signal,
-    body
-  }).then((resp) => assessCohereResponse(resp));
+  return fetch(
+    isChatPrompt ? "https://api.cohere.com/v1/chat" : "https://api.cohere.com/v1/generate",
+    {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        authorization: `Bearer ${access_token}`,
+        "Cohere-Version": "2022-12-06"
+      },
+      signal,
+      body
+    }
+  ).then((resp) => assessCohereResponse(resp));
 };
 function assessCohereResponse(response) {
   return __async(this, null, function* () {
@@ -883,8 +963,9 @@ function assessCohereResponse(response) {
 
 // src/core/providers/cohere/prompt.ts
 var prompt2 = (config) => generate2(config).then((original) => {
+  const isChatPrompt = Array.isArray(prompt2);
   const _tokenizer = tokenizer2(config.model);
-  const outputs = original.generations.map(({ text }) => {
+  const outputs = !isChatPrompt ? original.generations.map(({ text }) => {
     var _a, _b, _c;
     const tokens = _tokenizer.count(text);
     return {
@@ -894,7 +975,13 @@ var prompt2 = (config) => generate2(config).then((original) => {
         (seq) => !text.endsWith(seq)
       )))
     };
-  });
+  }) : [
+    {
+      content: original.text,
+      tokens: _tokenizer.count(original.text),
+      truncated: false
+    }
+  ];
   const input_tokens = _tokenizer.count(config.prompt);
   const output_tokens = outputs.reduce((sum, o) => sum + o.tokens, 0);
   return {
@@ -1279,6 +1366,30 @@ function promptwiz(config) {
           is_running = false;
           return res;
         });
+      });
+    },
+    stream(inputsOrHandler, handler) {
+      if (is_running)
+        throw new Error("Cannot run while another prompt is already running.");
+      is_running = true;
+      ac = new AbortController();
+      let inputs;
+      if (typeof inputsOrHandler === "function") {
+        handler = inputsOrHandler;
+      } else {
+        inputs = inputsOrHandler;
+        if (!handler)
+          throw new Error("Missing stream handler function.");
+      }
+      return runPrompt(
+        config,
+        (_config) => getProvider(_config.provider).prompt(__spreadProps(__spreadValues({}, _config), {
+          prompt: inputs ? hydratePromptInputs(_config.prompt, inputs) : _config.prompt,
+          stream: handler
+        }))
+      ).then((res) => {
+        is_running = false;
+        return res;
       });
     }
   };

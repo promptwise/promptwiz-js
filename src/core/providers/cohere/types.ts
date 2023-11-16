@@ -7,6 +7,9 @@ export type CohereCompletion = {
     index: number;
   }>;
   meta: {};
+} | {
+  generation_id: string;
+  text: string;
 };
 
 export type CohereParameters = {

@@ -28,31 +28,24 @@ describe("Cohere provider", () => {
           JSON.stringify({
             id: "1",
             prompt: "Test",
-            generations: [
-              {
-                id: "gen1",
-                text: "Hello, how can I help you today?",
-                index: 0,
-              },
-            ],
-            meta: {},
+            text: "Hello, how can I help you today?",
           })
         )
       );
 
       const result = await cohere.generate({
         ...defaultParams,
-        prompt: [{ role: "user", content: "Hello" }],
+        prompt: [{ role: "system", content: "Instructions" },{ role: "assistant", content: "Hello" },{ role: "user", content: "Hello" }],
       });
 
       // Expecting the fetch to have been called with the converted chat message.
       expect(fetch).toHaveBeenCalledWith(
-        "https://api.cohere.com/v1/generate",
+        "https://api.cohere.com/v1/chat",
         expect.objectContaining({
-          body: expect.stringContaining("User: Hello\\n\\nAssistant:"),
+          body: expect.stringContaining(`\"preamble_override\":\"Instructions\",\"chat_history\":[{\"role\":\"assistant\",\"content\":\"Hello\"}],\"message\":\"Hello\"}`),
         })
       );
-      expect(result.generations[0].text).toBe(
+      expect(result.text).toBe(
         "Hello, how can I help you today?"
       );
     });

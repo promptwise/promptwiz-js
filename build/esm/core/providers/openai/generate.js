@@ -1,4 +1,6 @@
 var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __propIsEnum = Object.prototype.propertyIsEnumerable;
@@ -14,34 +16,26 @@ var __spreadValues = (a, b) => {
     }
   return a;
 };
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 import {
   convertChatMessagesToText,
   convertTextToChatMessages
 } from "../../utils";
-import {
-  AuthorizationError,
-  ClientError,
-  RateLimitError,
-  ServerError,
-  ServiceQuotaError,
-  AvailabilityError
-} from "../../errors";
-const generate = ({ model, access_token, parameters, prompt, signal }) => {
+import { AuthorizationError } from "../../errors";
+import { fetchStream } from "./stream";
+import { assessOpenAIResponse } from "./response";
+const generate = ({ model, access_token, parameters, prompt, signal, stream }) => {
   if (!access_token)
     throw new AuthorizationError(
       "Missing access_token required to use OpenAI generate!"
     );
   const isChatPrompt = Array.isArray(prompt);
   const isChatModel = model.includes("gpt-3.5") || model.includes("gpt-4");
-  const requestBody = __spreadValues({
+  const requestBody = __spreadProps(__spreadValues({
     model
-  }, parameters);
-  if (requestBody == null ? void 0 : requestBody.stream) {
-    requestBody.stream = false;
-    console.warn(
-      "Streaming responses not yet supported in promptwiz-js. Contributions welcome!"
-    );
-  }
+  }, parameters), {
+    stream: !!stream
+  });
   if (isChatModel) {
     requestBody.messages = isChatPrompt ? prompt : convertTextToChatMessages(prompt);
   } else {
@@ -50,46 +44,23 @@ const generate = ({ model, access_token, parameters, prompt, signal }) => {
 Assistant:` : prompt;
   }
   const body = JSON.stringify(requestBody);
-  return fetch(
-    isChatModel ? "https://api.openai.com/v1/chat/completions" : "https://api.openai.com/v1/completions",
-    {
-      method: "POST",
-      headers: {
-        "accept": "application/json",
-        "content-type": "application/json",
-        authorization: `Bearer ${access_token}`
-      },
-      signal,
-      body
-    }
-  ).then((resp) => assessOpenAIResponse(resp));
+  const url = isChatModel ? "https://api.openai.com/v1/chat/completions" : "https://api.openai.com/v1/completions";
+  const options = {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "content-type": "application/json",
+      authorization: `Bearer ${access_token}`
+    },
+    signal,
+    body
+  };
+  if (stream)
+    return fetchStream(stream, isChatModel)(url, options);
+  return fetch(url, options).then(
+    (resp) => assessOpenAIResponse(resp).then((ok) => ok && resp.json())
+  );
 };
-async function assessOpenAIResponse(response) {
-  var _a, _b;
-  const responseBody = await response.json();
-  if (!response.ok) {
-    const status = response.status;
-    const message = ((_a = responseBody.error) == null ? void 0 : _a.message) || ((_b = responseBody.error) == null ? void 0 : _b.response) || response.statusText;
-    switch (status) {
-      case 401:
-        throw new AuthorizationError(message);
-      case 429: {
-        if (message.includes("quota"))
-          throw new ServiceQuotaError(message);
-        throw new RateLimitError(message);
-      }
-      case 500:
-        throw new ServerError(message);
-      case 503:
-        throw new AvailabilityError(message);
-      default:
-        if (status >= 400 && status < 500)
-          throw new ClientError(message);
-        throw new Error(message);
-    }
-  }
-  return responseBody;
-}
 export {
   generate
 };

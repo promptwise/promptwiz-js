@@ -1,4 +1,9 @@
-import { Promptwiz, PromptwizConfig, PromptwizOutput } from "./types";
+import {
+  Promptwiz,
+  PromptwizConfig,
+  PromptwizOutput,
+  StreamHandler,
+} from "./types";
 import { getProvider } from "./getProvider";
 import { runPrompt } from "./providers/runPrompt";
 import { hydratePromptInputs } from "./utils";
@@ -41,12 +46,37 @@ export function promptwiz<Inputs extends Record<string, string>>(
         return res;
       });
     },
-    // stream(
-    //   inputsOrHandler: Inputs | StreamHandler,
-    //   handler: StreamHandler
-    // ): Promise<PromptwizOutput> {
-    // TODO: implement streaming with option for streaming parser
-    // },
+
+    stream(
+      inputsOrHandler: Inputs | StreamHandler,
+      handler?: StreamHandler
+    ): Promise<PromptwizOutput> {
+      if (is_running)
+        throw new Error("Cannot run while another prompt is already running.");
+      is_running = true;
+      ac = new AbortController();
+
+      let inputs: Inputs | undefined;
+      if (typeof inputsOrHandler === "function") {
+        handler = inputsOrHandler;
+      } else {
+        inputs = inputsOrHandler;
+        if (!handler) throw new Error("Missing stream handler function.");
+      }
+
+      return runPrompt(config, (_config) =>
+        getProvider(_config.provider).prompt({
+          ..._config,
+          prompt: inputs
+            ? hydratePromptInputs(_config.prompt, inputs)
+            : _config.prompt,
+          stream: handler,
+        })
+      ).then((res) => {
+        is_running = false;
+        return res;
+      });
+    },
   };
   return promptwizInstance;
 }

@@ -25,8 +25,9 @@ var import_models = require("./models");
 var import_tokenizer = require("./tokenizer");
 var import_generate = require("./generate");
 const prompt = (config) => (0, import_generate.generate)(config).then((original) => {
+  const isChatPrompt = Array.isArray(prompt);
   const _tokenizer = (0, import_tokenizer.tokenizer)(config.model);
-  const outputs = original.generations.map(({ text }) => {
+  const outputs = !isChatPrompt ? original.generations.map(({ text }) => {
     var _a, _b, _c;
     const tokens = _tokenizer.count(text);
     return {
@@ -36,7 +37,13 @@ const prompt = (config) => (0, import_generate.generate)(config).then((original)
         (seq) => !text.endsWith(seq)
       )))
     };
-  });
+  }) : [
+    {
+      content: original.text,
+      tokens: _tokenizer.count(original.text),
+      truncated: false
+    }
+  ];
   const input_tokens = _tokenizer.count(config.prompt);
   const output_tokens = outputs.reduce((sum, o) => sum + o.tokens, 0);
   return {

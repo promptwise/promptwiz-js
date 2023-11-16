@@ -92,6 +92,30 @@ function promptwiz(config) {
           return res;
         });
       });
+    },
+    stream(inputsOrHandler, handler) {
+      if (is_running)
+        throw new Error("Cannot run while another prompt is already running.");
+      is_running = true;
+      ac = new AbortController();
+      let inputs;
+      if (typeof inputsOrHandler === "function") {
+        handler = inputsOrHandler;
+      } else {
+        inputs = inputsOrHandler;
+        if (!handler)
+          throw new Error("Missing stream handler function.");
+      }
+      return (0, import_runPrompt.runPrompt)(
+        config,
+        (_config) => (0, import_getProvider.getProvider)(_config.provider).prompt(__spreadProps(__spreadValues({}, _config), {
+          prompt: inputs ? (0, import_utils.hydratePromptInputs)(_config.prompt, inputs) : _config.prompt,
+          stream: handler
+        }))
+      ).then((res) => {
+        is_running = false;
+        return res;
+      });
     }
   };
   return promptwizInstance;
