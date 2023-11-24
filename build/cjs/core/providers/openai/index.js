@@ -15,6 +15,7 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
+var __reExport = (target, mod, secondTarget) => (__copyProps(target, mod, "default"), secondTarget && __copyProps(secondTarget, mod, "default"));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var openai_exports = {};
 __export(openai_exports, {
@@ -26,8 +27,11 @@ var import_tokenizer = require("./tokenizer");
 var import_generate = require("./generate");
 var import_prompt = require("./prompt");
 var import_run = require("./run");
+var import_api = require("./api");
 var import_parameters = require("./parameters");
+__reExport(openai_exports, require("./response"), module.exports);
 const openai = {
+  api: import_api.api,
   generate: import_generate.generate,
   prompt: import_prompt.prompt,
   run: import_run.run,

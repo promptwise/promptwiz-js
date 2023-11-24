@@ -3,13 +3,11 @@ import {
   convertTextToChatMessages,
 } from "../../utils";
 import { AuthorizationError } from "../../errors";
-import { ProviderGenerate } from "../../types";
+import { ProviderApi } from "../../types";
 import { OpenAICompletion, OpenAIParameters } from "./types";
 import { OpenAIModel } from "./models";
-import { fetchStream } from "./stream";
-import { assessOpenAIResponse } from "./response";
 
-export const generate: ProviderGenerate<
+export const api: ProviderApi<
   OpenAIModel,
   OpenAIParameters,
   OpenAICompletion
@@ -25,7 +23,7 @@ export const generate: ProviderGenerate<
   const requestBody: Record<string, any> = {
     model,
     ...parameters,
-    stream: !!stream,
+    stream,
   };
 
   if (isChatModel) {
@@ -51,9 +49,5 @@ export const generate: ProviderGenerate<
     signal,
     body,
   };
-  // @ts-expect-error - later
-  if (stream) return fetchStream(stream, isChatModel)(url, options);
-  return fetch(url, options).then((resp) =>
-    assessOpenAIResponse(resp).then((ok) => ok && resp.json())
-  );
+  return fetch(url, options);
 };

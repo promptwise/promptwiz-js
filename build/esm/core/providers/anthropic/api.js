@@ -1,4 +1,6 @@
 var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __propIsEnum = Object.prototype.propertyIsEnumerable;
@@ -14,26 +16,20 @@ var __spreadValues = (a, b) => {
     }
   return a;
 };
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 import { convertChatMessagesToText } from "../../utils";
-import {
-  AuthorizationError
-} from "../../errors";
-import { assessAnthropicResponse } from "./response";
-const generate = ({ model, access_token, parameters, prompt, signal }) => {
+import { AuthorizationError } from "../../errors";
+const api = ({ model, access_token, parameters, prompt, signal, stream }) => {
   if (!access_token)
     throw new AuthorizationError(
       "Missing access_token required to use Anthropic generate!"
     );
   const isChatPrompt = Array.isArray(prompt);
-  const requestBody = __spreadValues({
+  const requestBody = __spreadProps(__spreadValues({
     model
-  }, parameters);
-  if (requestBody == null ? void 0 : requestBody.stream) {
-    requestBody.stream = false;
-    console.warn(
-      "Streaming responses not yet supported in promptwiz-js. Contributions welcome!"
-    );
-  }
+  }, parameters), {
+    stream
+  });
   requestBody.prompt = `${(isChatPrompt ? convertChatMessagesToText(prompt) : prompt).replaceAll("User:", "Human:")}
 
 Assistant:`;
@@ -55,10 +51,8 @@ Human: ${requestBody.prompt}`;
     },
     signal,
     body
-  }).then(
-    (resp) => assessAnthropicResponse(resp).then((ok) => ok && resp.json())
-  );
+  });
 };
 export {
-  generate
+  api
 };

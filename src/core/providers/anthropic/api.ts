@@ -1,22 +1,14 @@
-import { ProviderGenerate } from "../../types";
+import { ProviderApi } from "../../types";
 import { convertChatMessagesToText } from "../../utils";
-import {
-  AuthorizationError,
-  RateLimitError,
-  ServerError,
-  ServiceQuotaError,
-  AvailabilityError,
-  ClientError,
-} from "../../errors";
+import { AuthorizationError } from "../../errors";
 import { AnthropicParameters, AnthropicCompletion } from "./types";
 import { AnthropicModel } from "./models";
-import { assessAnthropicResponse } from "./response";
 
-export const generate: ProviderGenerate<
+export const api: ProviderApi<
   AnthropicModel,
   AnthropicParameters,
   AnthropicCompletion
-> = ({ model, access_token, parameters, prompt, signal }) => {
+> = ({ model, access_token, parameters, prompt, signal, stream }) => {
   if (!access_token)
     throw new AuthorizationError(
       "Missing access_token required to use Anthropic generate!"
@@ -26,15 +18,8 @@ export const generate: ProviderGenerate<
   const requestBody: Record<string, any> = {
     model,
     ...parameters,
-    // stream,
+    stream,
   };
-
-  if (requestBody?.stream) {
-    requestBody.stream = false;
-    console.warn(
-      "Streaming responses not yet supported in promptwiz-js. Contributions welcome!"
-    );
-  }
 
   // All requests to Anthropic must follow their `\n\nHuman: prompt text\n\nAssistant:` format
   requestBody.prompt = `${(isChatPrompt
@@ -58,7 +43,5 @@ export const generate: ProviderGenerate<
     },
     signal,
     body,
-  }).then((resp) =>
-    assessAnthropicResponse(resp).then((ok) => ok && resp.json())
-  );
+  });
 };

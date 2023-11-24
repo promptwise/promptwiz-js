@@ -9,6 +9,7 @@ import { OpenAICompletion, OpenAIParameters } from "./types";
 import { generate } from "./generate";
 import { prompt } from "./prompt";
 import { run } from "./run";
+import { api } from "./api";
 import {
   parametersFromProvider,
   maxGenerationsPerPrompt,
@@ -17,11 +18,13 @@ import {
   parameters,
 } from "./parameters";
 
+export * from "./response";
 export const openai: PromptProviderModule<
   OpenAIModel,
   OpenAIParameters,
   OpenAICompletion
 > = {
+  api,
   generate,
   prompt,
   run,

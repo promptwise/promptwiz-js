@@ -34,7 +34,7 @@ export type PromptwizControllerConfig<O> = {
     retry_if_parser_fails?: boolean;
     parser?: (output: string) => O;
     signal?: AbortSignal;
-    stream?: StreamHandler;
+    stream?: StreamHandler | boolean;
 };
 export type PromptwizPromptBase<M extends string = string, P = Record<string, unknown>> = {
     provider: ProviderName;
@@ -60,6 +60,8 @@ export type PromptwizDelta<D extends string | Partial<ChatMessage> = Partial<Cha
 export type StreamHandler = (delta: PromptwizDelta, done: boolean) => unknown;
 export type Promptwiz<Inputs extends Record<string, string> | void = void> = {
     readonly is_running: boolean;
+    api(): PromiseLike<Response>;
+    api(inputs: Inputs): PromiseLike<Response>;
     run(): PromiseLike<PromptwizOutput>;
     run(inputs: Inputs): PromiseLike<PromptwizOutput>;
     abort(): void;
@@ -87,12 +89,14 @@ export type ModelData = [
     output_cents_per_kilotoken: number
 ];
 export type ProviderModelRecord = Record<string, ModelData>;
+export type ProviderApi<M extends string = string, P = Record<string, unknown>, T = any> = (config: Pick<PromptwizConfig<M, P, string>, "model" | "access_token" | "parameters" | "prompt" | "signal" | "stream">) => Promise<Response>;
 export type ProviderGenerate<M extends string = string, P = Record<string, unknown>, T = any> = (config: Pick<PromptwizConfig<M, P, string>, "model" | "access_token" | "parameters" | "prompt" | "signal" | "stream">) => Promise<T>;
 export type ProviderPrompt<M extends string = string, P = Record<string, unknown>, T = any> = (config: Pick<PromptwizConfig<M, P, string>, "provider" | "model" | "access_token" | "parameters" | "prompt" | "signal" | "stream">) => Promise<Pick<PromptwizOutput<string, T>, "outputs" | "original" | "usage">>;
 export type ProviderRun<M extends string = string, P = Record<string, unknown>, T = any> = <O = any>(config: PromptwizConfig<M, P, O> & {
     inputs?: Record<string, string>;
 }) => Promise<PromptwizOutput<O, T>>;
 export interface PromptProviderModule<M extends string = string, P = Record<string, unknown>, T = any> {
+    api: ProviderApi<M, P, T>;
     generate: ProviderGenerate<M, P, T>;
     prompt: ProviderPrompt<M, P, T>;
     run: ProviderRun<M, P, T>;

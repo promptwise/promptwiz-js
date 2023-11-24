@@ -35,6 +35,11 @@ function promptwiz(config) {
     abort() {
       ac == null ? void 0 : ac.abort();
     },
+    async api(inputs) {
+      return getProvider(config.provider).api(__spreadProps(__spreadValues({}, config), {
+        prompt: inputs ? hydratePromptInputs(config.prompt, inputs) : config.prompt
+      }));
+    },
     async run(inputs) {
       if (is_running)
         throw new Error("Cannot run while another prompt is already running.");

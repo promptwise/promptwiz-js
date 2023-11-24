@@ -76,6 +76,13 @@ function promptwiz(config) {
     abort() {
       ac == null ? void 0 : ac.abort();
     },
+    api(inputs) {
+      return __async(this, null, function* () {
+        return (0, import_getProvider.getProvider)(config.provider).api(__spreadProps(__spreadValues({}, config), {
+          prompt: inputs ? (0, import_utils.hydratePromptInputs)(config.prompt, inputs) : config.prompt
+        }));
+      });
+    },
     run(inputs) {
       return __async(this, null, function* () {
         if (is_running)

@@ -1,14 +1,13 @@
-import { ProviderGenerate } from "../../types";
+import { ProviderApi } from "../../types";
 import { AuthorizationError } from "../../errors";
 import { CohereParameters, CohereCompletion } from "./types";
 import { CohereModel } from "./models";
-import { assessCohereResponse } from "./response";
 
-export const generate: ProviderGenerate<
+export const api: ProviderApi<
   CohereModel,
   CohereParameters,
   CohereCompletion
-> = ({ model, access_token, parameters, prompt, signal }) => {
+> = ({ model, access_token, parameters, prompt, signal, stream }) => {
   if (!access_token)
     throw new AuthorizationError(
       "Missing access_token required to use Cohere generate!"
@@ -18,14 +17,8 @@ export const generate: ProviderGenerate<
   const requestBody: Record<string, any> = {
     model,
     ...parameters,
+    stream,
   };
-
-  if (requestBody?.stream) {
-    requestBody.stream = false;
-    console.warn(
-      "Streaming responses not yet supported in promptwiz-js. Contributions welcome!"
-    );
-  }
   if (isChatPrompt) {
     let startIndex = 0;
     if (prompt[0].role === "system") {
@@ -57,5 +50,5 @@ export const generate: ProviderGenerate<
       signal,
       body,
     }
-  ).then((resp) => assessCohereResponse(resp).then((ok) => ok && resp.json()));
+  );
 };

@@ -28,6 +28,15 @@ export function promptwiz<Inputs extends Record<string, string>>(
       ac?.abort();
     },
 
+    async api(inputs?: Inputs): Promise<Response> {
+      return getProvider(config.provider).api({
+        ...config,
+        prompt: inputs
+          ? hydratePromptInputs(config.prompt, inputs)
+          : config.prompt,
+      });
+    },
+
     async run(inputs?: Inputs): Promise<PromptwizOutput> {
       if (is_running)
         throw new Error("Cannot run while another prompt is already running.");

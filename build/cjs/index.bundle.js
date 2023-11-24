@@ -79,6 +79,9 @@ __export(src_exports, {
   ServerError: () => ServerError,
   ServiceQuotaError: () => ServiceQuotaError,
   anthropic: () => anthropic,
+  assessAnthropicResponse: () => assessAnthropicResponse,
+  assessCohereResponse: () => assessCohereResponse,
+  assessOpenAIResponse: () => assessOpenAIResponse,
   cheapest: () => cheapest,
   cohere: () => cohere,
   convertChatMessagesToText: () => convertChatMessagesToText,
@@ -99,6 +102,9 @@ module.exports = __toCommonJS(src_exports);
 var providers_exports = {};
 __export(providers_exports, {
   anthropic: () => anthropic,
+  assessAnthropicResponse: () => assessAnthropicResponse,
+  assessCohereResponse: () => assessCohereResponse,
+  assessOpenAIResponse: () => assessOpenAIResponse,
   cohere: () => cohere,
   openai: () => openai
 });
@@ -765,6 +771,41 @@ var run = (_a) => {
   );
 };
 
+// src/core/providers/openai/api.ts
+var api = ({ model, access_token, parameters: parameters4, prompt: prompt4, signal, stream }) => {
+  if (!access_token)
+    throw new AuthorizationError(
+      "Missing access_token required to use OpenAI generate!"
+    );
+  const isChatPrompt = Array.isArray(prompt4);
+  const isChatModel = model.includes("gpt-3.5") || model.includes("gpt-4");
+  const requestBody = __spreadProps(__spreadValues({
+    model
+  }, parameters4), {
+    stream
+  });
+  if (isChatModel) {
+    requestBody.messages = isChatPrompt ? prompt4 : convertTextToChatMessages(prompt4);
+  } else {
+    requestBody.prompt = isChatPrompt ? `${convertChatMessagesToText(prompt4)}
+
+Assistant:` : prompt4;
+  }
+  const body = JSON.stringify(requestBody);
+  const url = isChatModel ? "https://api.openai.com/v1/chat/completions" : "https://api.openai.com/v1/completions";
+  const options = {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "content-type": "application/json",
+      authorization: `Bearer ${access_token}`
+    },
+    signal,
+    body
+  };
+  return fetch(url, options);
+};
+
 // src/core/providers/openai/parameters.ts
 function parameters(params) {
   return params;
@@ -838,6 +879,7 @@ function parametersFromCohere(params) {
 
 // src/core/providers/openai/index.ts
 var openai = {
+  api,
   generate,
   prompt,
   run,
@@ -898,6 +940,33 @@ var tokenizer2 = (model, extendedSpecialTokens) => {
   return encoder;
 };
 
+// src/core/providers/cohere/response.ts
+function assessCohereResponse(response) {
+  return __async(this, null, function* () {
+    if (!response.ok) {
+      const responseBody = yield response.json();
+      const status = response.status;
+      const message = responseBody.error.message || response.statusText;
+      switch (status) {
+        case 401:
+          throw new AuthorizationError(message);
+        case 429: {
+          if (response.statusText.includes("quota"))
+            throw new ServiceQuotaError(message);
+          throw new RateLimitError(message);
+        }
+        case 500:
+          throw new ServerError(message);
+        default:
+          if (status >= 400 && status < 500)
+            throw new ClientError(message);
+          throw new Error(message);
+      }
+    }
+    return true;
+  });
+}
+
 // src/core/providers/cohere/generate.ts
 var generate2 = ({ model, access_token, parameters: parameters4, prompt: prompt4, signal }) => {
   if (!access_token)
@@ -943,33 +1012,8 @@ var generate2 = ({ model, access_token, parameters: parameters4, prompt: prompt4
       signal,
       body
     }
-  ).then((resp) => assessCohereResponse(resp));
+  ).then((resp) => assessCohereResponse(resp).then((ok) => ok && resp.json()));
 };
-function assessCohereResponse(response) {
-  return __async(this, null, function* () {
-    const responseBody = yield response.json();
-    if (!response.ok) {
-      const status = response.status;
-      const message = responseBody.error.message || response.statusText;
-      switch (status) {
-        case 401:
-          throw new AuthorizationError(message);
-        case 429: {
-          if (response.statusText.includes("quota"))
-            throw new ServiceQuotaError(message);
-          throw new RateLimitError(message);
-        }
-        case 500:
-          throw new ServerError(message);
-        default:
-          if (status >= 400 && status < 500)
-            throw new ClientError(message);
-          throw new Error(message);
-      }
-    }
-    return responseBody;
-  });
-}
 
 // src/core/providers/cohere/prompt.ts
 var prompt2 = (config) => generate2(config).then((original) => {
@@ -1018,6 +1062,50 @@ var run2 = (_a) => {
       prompt: inputs ? hydratePromptInputs(input_prompt, inputs) : input_prompt
     }),
     prompt2
+  );
+};
+
+// src/core/providers/cohere/api.ts
+var api2 = ({ model, access_token, parameters: parameters4, prompt: prompt4, signal, stream }) => {
+  if (!access_token)
+    throw new AuthorizationError(
+      "Missing access_token required to use Cohere generate!"
+    );
+  const isChatPrompt = Array.isArray(prompt4);
+  const requestBody = __spreadProps(__spreadValues({
+    model
+  }, parameters4), {
+    stream
+  });
+  if (isChatPrompt) {
+    let startIndex = 0;
+    if (prompt4[0].role === "system") {
+      requestBody.preamble_override = prompt4[0].content;
+      startIndex = 1;
+    }
+    requestBody.chat_history = prompt4.slice(startIndex, -1);
+    requestBody.message = prompt4.slice(-1)[0].content;
+  } else {
+    if (!(parameters4 == null ? void 0 : parameters4.max_tokens))
+      requestBody.max_tokens = 20;
+    requestBody.prompt = prompt4;
+    requestBody.truncate = "NONE";
+    requestBody.return_likelihoods = "NONE";
+  }
+  const body = JSON.stringify(requestBody);
+  return fetch(
+    isChatPrompt ? "https://api.cohere.com/v1/chat" : "https://api.cohere.com/v1/generate",
+    {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        authorization: `Bearer ${access_token}`,
+        "Cohere-Version": "2022-12-06"
+      },
+      signal,
+      body
+    }
   );
 };
 
@@ -1100,6 +1188,7 @@ function parametersFromOpenAI(params) {
 
 // src/core/providers/cohere/index.ts
 var cohere = {
+  api: api2,
   generate: generate2,
   prompt: prompt2,
   run: run2,
@@ -1159,6 +1248,35 @@ var tokenizer3 = (model, extendedSpecialTokens) => {
   return encoder;
 };
 
+// src/core/providers/anthropic/response.ts
+function assessAnthropicResponse(response) {
+  return __async(this, null, function* () {
+    if (!response.ok) {
+      const responseBody = yield response.json();
+      const status = response.status;
+      const message = responseBody.error.message || response.statusText;
+      switch (status) {
+        case 401:
+          throw new AuthorizationError(message);
+        case 429: {
+          if (response.statusText.includes("quota"))
+            throw new ServiceQuotaError(message);
+          throw new RateLimitError(message);
+        }
+        case 500:
+          throw new ServerError(message);
+        case 529:
+          throw new AvailabilityError(message);
+        default:
+          if (status >= 400 && status < 500)
+            throw new ClientError(message);
+          throw new Error(message);
+      }
+    }
+    return true;
+  });
+}
+
 // src/core/providers/anthropic/generate.ts
 var generate3 = ({ model, access_token, parameters: parameters4, prompt: prompt4, signal }) => {
   if (!access_token)
@@ -1189,42 +1307,17 @@ Human: ${requestBody.prompt}`;
   return fetch("https://api.anthropic.com/v1/complete", {
     method: "POST",
     headers: {
-      "accept": "application/json",
+      accept: "application/json",
       "content-type": "application/json",
       "anthropic-version": "2023-06-01",
       "x-api-key": access_token
     },
     signal,
     body
-  }).then((resp) => assessAnthropicResponse(resp));
+  }).then(
+    (resp) => assessAnthropicResponse(resp).then((ok) => ok && resp.json())
+  );
 };
-function assessAnthropicResponse(response) {
-  return __async(this, null, function* () {
-    const responseBody = yield response.json();
-    if (!response.ok) {
-      const status = response.status;
-      const message = responseBody.error.message || response.statusText;
-      switch (status) {
-        case 401:
-          throw new AuthorizationError(message);
-        case 429: {
-          if (response.statusText.includes("quota"))
-            throw new ServiceQuotaError(message);
-          throw new RateLimitError(message);
-        }
-        case 500:
-          throw new ServerError(message);
-        case 529:
-          throw new AvailabilityError(message);
-        default:
-          if (status >= 400 && status < 500)
-            throw new ClientError(message);
-          throw new Error(message);
-      }
-    }
-    return responseBody;
-  });
-}
 
 // src/core/providers/anthropic/prompt.ts
 var prompt3 = (config) => generate3(config).then((original) => {
@@ -1262,6 +1355,42 @@ var run3 = (_a) => {
     }),
     prompt3
   );
+};
+
+// src/core/providers/anthropic/api.ts
+var api3 = ({ model, access_token, parameters: parameters4, prompt: prompt4, signal, stream }) => {
+  if (!access_token)
+    throw new AuthorizationError(
+      "Missing access_token required to use Anthropic generate!"
+    );
+  const isChatPrompt = Array.isArray(prompt4);
+  const requestBody = __spreadProps(__spreadValues({
+    model
+  }, parameters4), {
+    stream
+  });
+  requestBody.prompt = `${(isChatPrompt ? convertChatMessagesToText(prompt4) : prompt4).replaceAll("User:", "Human:")}
+
+Assistant:`;
+  if (!requestBody.prompt.startsWith("\n\nHuman: ")) {
+    requestBody.prompt = requestBody.prompt.startsWith("Human: ") ? `
+
+${requestBody.prompt}` : `
+
+Human: ${requestBody.prompt}`;
+  }
+  const body = JSON.stringify(requestBody);
+  return fetch("https://api.anthropic.com/v1/complete", {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "content-type": "application/json",
+      "anthropic-version": "2023-06-01",
+      "x-api-key": access_token
+    },
+    signal,
+    body
+  });
 };
 
 // src/core/providers/anthropic/parameters.ts
@@ -1325,6 +1454,7 @@ function parametersFromCohere2(params) {
 
 // src/core/providers/anthropic/index.ts
 var anthropic = {
+  api: api3,
   generate: generate3,
   prompt: prompt3,
   run: run3,
@@ -1360,6 +1490,13 @@ function promptwiz(config) {
     },
     abort() {
       ac == null ? void 0 : ac.abort();
+    },
+    api(inputs) {
+      return __async(this, null, function* () {
+        return getProvider(config.provider).api(__spreadProps(__spreadValues({}, config), {
+          prompt: inputs ? hydratePromptInputs(config.prompt, inputs) : config.prompt
+        }));
+      });
     },
     run(inputs) {
       return __async(this, null, function* () {
@@ -1521,6 +1658,9 @@ var largest = {
   ServerError,
   ServiceQuotaError,
   anthropic,
+  assessAnthropicResponse,
+  assessCohereResponse,
+  assessOpenAIResponse,
   cheapest,
   cohere,
   convertChatMessagesToText,

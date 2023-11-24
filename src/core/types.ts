@@ -37,7 +37,7 @@ export type PromptwizControllerConfig<O> = {
   retry_if_parser_fails?: boolean;
   parser?: (output: string) => O; // throw an error to retry
   signal?: AbortSignal;
-  stream?: StreamHandler;
+  stream?: StreamHandler | boolean;
 };
 
 export type PromptwizPromptBase<
@@ -85,6 +85,8 @@ export type StreamHandler = (delta: PromptwizDelta, done: boolean) => unknown;
 
 export type Promptwiz<Inputs extends Record<string, string> | void = void> = {
   readonly is_running: boolean;
+  api(): PromiseLike<Response>;
+  api(inputs: Inputs): PromiseLike<Response>;
   run(): PromiseLike<PromptwizOutput>;
   run(inputs: Inputs): PromiseLike<PromptwizOutput>;
   abort(): void;
@@ -129,6 +131,17 @@ export type ModelData = [
 
 export type ProviderModelRecord = Record<string, ModelData>;
 
+export type ProviderApi<
+  M extends string = string,
+  P = Record<string, unknown>,
+  T = any
+> = (
+  config: Pick<
+    PromptwizConfig<M, P, string>,
+    "model" | "access_token" | "parameters" | "prompt" | "signal" | "stream"
+  >
+) => Promise<Response>;
+
 export type ProviderGenerate<
   M extends string = string,
   P = Record<string, unknown>,
@@ -147,7 +160,13 @@ export type ProviderPrompt<
 > = (
   config: Pick<
     PromptwizConfig<M, P, string>,
-    "provider" | "model" | "access_token" | "parameters" | "prompt" | "signal" | "stream"
+    | "provider"
+    | "model"
+    | "access_token"
+    | "parameters"
+    | "prompt"
+    | "signal"
+    | "stream"
   >
 ) => Promise<
   Pick<PromptwizOutput<string, T>, "outputs" | "original" | "usage">
@@ -166,6 +185,9 @@ export interface PromptProviderModule<
   P = Record<string, unknown>,
   T = any
 > {
+  // Run the prompt once and return the unhandled fetch Response
+  api: ProviderApi<M, P, T>;
+
   // Run the prompt once without parsing or retry logic
   generate: ProviderGenerate<M, P, T>;
 
