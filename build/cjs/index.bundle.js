@@ -473,7 +473,6 @@ function fetchStream(streamHandler, isChat = true) {
     return new Promise((resolve, reject) => __async(this, null, function* () {
       const response = yield fetch(url, init);
       try {
-        console.log({ response });
         assessOpenAIResponse(response);
       } catch (error) {
         reject(error);
@@ -487,6 +486,7 @@ function fetchStream(streamHandler, isChat = true) {
           try {
             const { done, value } = yield reader.read();
             if (done) {
+              streamHandler([], true);
               const combined = allResponses.reduce(
                 ({ choices }, chunk) => {
                   chunk.choices.forEach(

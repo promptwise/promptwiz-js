@@ -90,6 +90,7 @@ function fetchStream(streamHandler, isChat = true) {
           try {
             const { done, value } = yield reader.read();
             if (done) {
+              streamHandler([], true);
               const combined = allResponses.reduce(
                 ({ choices }, chunk) => {
                   chunk.choices.forEach(

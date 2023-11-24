@@ -9,7 +9,6 @@ export function fetchStream(
     new Promise(async (resolve, reject) => {
       const response = await fetch(url, init);
       try {
-        console.log({ response });
         assessOpenAIResponse(response);
       } catch (error) {
         reject(error);
@@ -24,6 +23,7 @@ export function fetchStream(
         try {
           const { done, value } = await reader.read();
           if (done) {
+            streamHandler([], true);
             //@ts-expect-error - later
             const combined = allResponses.reduce(
               ({ choices }, chunk) => {
