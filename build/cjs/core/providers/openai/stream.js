@@ -76,7 +76,6 @@ function fetchStream(streamHandler, isChat = true) {
     return new Promise((resolve, reject) => __async(this, null, function* () {
       const response = yield fetch(url, init);
       try {
-        console.log({ response });
         (0, import_response.assessOpenAIResponse)(response);
       } catch (error) {
         reject(error);
