@@ -574,6 +574,24 @@ describe("OpenAI provider", () => {
       expect(result.usage.retries).toBe(1);
     });
   });
+  test.skip("stream", async () => {
+    const testKey = ""; // TODO: Bring your own key and comment out the fetch mocking above
+    // Start streaming response.
+    const streamHandler = jest.fn((...args) =>
+      console.log("Received:", ...args)
+    );
+    const result = openai.generate({
+      access_token: testKey,
+      model: "gpt-3.5-turbo",
+      prompt: [{ role: "user", content: "Say hello to my little friend!" }],
+      parameters: {
+        temperature: 0.7,
+        max_tokens: 200,
+      },
+      stream: streamHandler,
+    });
+    console.log({ result: await result });
+  }, 20000);
   describe("tokenizer", () => {
     test("encode", () => {
       const tokenizer = openai.tokenizer("gpt-3.5-turbo");

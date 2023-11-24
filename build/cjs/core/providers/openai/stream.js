@@ -76,6 +76,7 @@ function fetchStream(streamHandler, isChat = true) {
     return new Promise((resolve, reject) => __async(this, null, function* () {
       const response = yield fetch(url, init);
       try {
+        console.log({ response });
         (0, import_response.assessOpenAIResponse)(response);
       } catch (error) {
         reject(error);
@@ -83,15 +84,15 @@ function fetchStream(streamHandler, isChat = true) {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let allResponses = [];
+      let buffer_text = "";
       function processChunk() {
         return __async(this, null, function* () {
           try {
             const { done, value } = yield reader.read();
             if (done) {
-              streamHandler([], true);
               const combined = allResponses.reduce(
-                ({ choices }, chunk2) => {
-                  chunk2.choices.forEach(
+                ({ choices }, chunk) => {
+                  chunk.choices.forEach(
                     isChat ? (_a) => {
                       var _b = _a, { delta, index } = _b, other = __objRest(_b, ["delta", "index"]);
                       var _a2, _b2;
@@ -110,7 +111,7 @@ function fetchStream(streamHandler, isChat = true) {
                       });
                     }
                   );
-                  return __spreadProps(__spreadValues({}, chunk2), {
+                  return __spreadProps(__spreadValues({}, chunk), {
                     choices
                   });
                 },
@@ -118,15 +119,24 @@ function fetchStream(streamHandler, isChat = true) {
               );
               return resolve(combined);
             }
-            const chunk = JSON.parse(decoder.decode(value));
-            allResponses.push(chunk);
-            streamHandler(
-              chunk.choices.map((c) => ({
-                delta: isChat ? c.delta : c.text,
-                index: c.index
-              })),
-              false
-            );
+            const txt = decoder.decode(value);
+            buffer_text = `${buffer_text}${txt.startsWith("data: ") ? "\n\n" : ""}${txt}`;
+            const chunks = buffer_text.split("\n\n");
+            buffer_text = chunks.pop() || "";
+            let obj;
+            for (const chunk of chunks) {
+              if (!chunk.trim() || chunk.includes("data: [DONE]"))
+                continue;
+              obj = JSON.parse(chunk.trim().slice(6));
+              allResponses.push(obj);
+              streamHandler(
+                obj.choices.map((c) => ({
+                  delta: isChat ? c.delta : c.text,
+                  index: c.index
+                })),
+                false
+              );
+            }
             processChunk();
           } catch (error) {
             reject(error);
