@@ -1,6 +1,6 @@
 {
   "name": "@promptwise/promptwiz-js",
-  "version": "0.4.11",
+  "version": "0.4.12",
   "description": "Promptwiz-js is a server-side TypeScript/JavaScript library for prompting large language models (LLMs) using a shared interface compatible with the Promptwise service. `npm install @promptwise/promptwiz-js`",
   "main": "./build/cjs/index.bundle.js",
   "module": "./build/esm/index.js",
