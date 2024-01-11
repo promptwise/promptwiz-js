@@ -7,7 +7,7 @@ let _encoder_cache: MistralTiktoken | null = null;
 export const tokenizer = (
   model: MistralModel,
   extendedSpecialTokens?: Record<string, number>
-) => {
+): Tiktoken => {
   let encoder =
     _encoder_cache ||
     new MistralTiktoken({
@@ -16,5 +16,5 @@ export const tokenizer = (
       extendedSpecialTokens,
     });
   _encoder_cache = encoder;
-  return encoder;
+  return encoder as unknown as Tiktoken;
 };

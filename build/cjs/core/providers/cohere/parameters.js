@@ -42,6 +42,8 @@ function parametersFromProvider(provider, params) {
     return parametersFromOpenAI(params);
   if (provider === "anthropic")
     return parametersFromAnthropic(params);
+  if (provider === "mistral")
+    return parametersFromMistral(params);
   throw new Error(`Unsupported provider: '${provider}'`);
 }
 function parametersFromAnthropic(params) {
@@ -96,6 +98,23 @@ function parametersFromOpenAI(params) {
     );
   if (Array.isArray(params.stop) && params.stop.length)
     result.stop_sequences = params.stop;
+  if (params.stream != null)
+    result.stream = params.stream;
+  return result;
+}
+function parametersFromMistral(params) {
+  const result = {};
+  if (params.max_tokens != null)
+    result.max_tokens = params.max_tokens;
+  if (params.temperature != null)
+    result.temperature = Math.max(0, Math.min(params.temperature * 5, 5));
+  if (params.top_p != null) {
+    result.p = params.top_p;
+    if (params.top_p === 0)
+      result.p = 1e-11;
+    if (params.top_p === 1)
+      result.p = 0.99999999999;
+  }
   if (params.stream != null)
     result.stream = params.stream;
   return result;

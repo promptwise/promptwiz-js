@@ -1,0 +1,12 @@
+import { AnthropicParameters } from "../anthropic/types";
+import { CohereParameters } from "../cohere/types";
+import { OpenAIParameters } from "../openai/types";
+import { MistralParameters } from "./types";
+export declare function parameters<K extends keyof MistralParameters>(params: Pick<MistralParameters, K>): MistralParameters;
+export declare function maxGenerationsPerPrompt(): number;
+export declare function maxTemperature(): number;
+export declare function minTemperature(): number;
+export declare function parametersFromProvider<PP extends Record<string, unknown>>(provider: string, params: PP): MistralParameters;
+export declare function parametersFromOpenAI(params: OpenAIParameters): MistralParameters;
+export declare function parametersFromAnthropic(params: AnthropicParameters): MistralParameters;
+export declare function parametersFromCohere(params: CohereParameters): MistralParameters;

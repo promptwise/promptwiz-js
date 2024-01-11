@@ -15,6 +15,8 @@ function parametersFromProvider(provider, params) {
     return parametersFromOpenAI(params);
   if (provider === "cohere")
     return parametersFromCohere(params);
+  if (provider === "mistral")
+    return parametersFromMistral(params);
   throw new Error(`Unsupported provider: '${provider}'`);
 }
 function parametersFromOpenAI(params) {
@@ -51,6 +53,23 @@ function parametersFromCohere(params) {
   }
   if (Array.isArray(params.stop_sequences) && params.stop_sequences.length)
     result.stop_sequences = params.stop_sequences;
+  if (params.stream != null)
+    result.stream = params.stream;
+  return result;
+}
+function parametersFromMistral(params) {
+  const result = {};
+  if (params.max_tokens != null)
+    result.max_tokens_to_sample = params.max_tokens;
+  if (params.temperature != null)
+    result.temperature = Math.max(0, Math.min(params.temperature * 5, 1));
+  if (params.top_p != null) {
+    result.top_p = params.top_p;
+    if (params.top_p === 1e-11)
+      result.top_p = 0;
+    if (params.top_p === 0.99999999999)
+      result.top_p = 1;
+  }
   if (params.stream != null)
     result.stream = params.stream;
   return result;
