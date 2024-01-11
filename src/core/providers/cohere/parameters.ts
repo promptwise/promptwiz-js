@@ -1,6 +1,7 @@
 import { OpenAIParameters } from "../openai/types";
 import { AnthropicParameters } from "../anthropic/types";
 import { CohereParameters } from "./types";
+import { MistralParameters } from "../mistral/types";
 
 export function parameters<K extends keyof CohereParameters>(
   params: Pick<CohereParameters, K>
@@ -26,6 +27,7 @@ export function parametersFromProvider<PP extends Record<string, unknown>>(
 ): CohereParameters {
   if (provider === "openai") return parametersFromOpenAI(params);
   if (provider === "anthropic") return parametersFromAnthropic(params);
+  if (provider === "mistral") return parametersFromMistral(params);
   throw new Error(`Unsupported provider: '${provider}'`);
 }
 
@@ -78,6 +80,21 @@ function parametersFromOpenAI(params: OpenAIParameters): CohereParameters {
     );
   if (Array.isArray(params.stop) && params.stop.length)
     result.stop_sequences = params.stop;
+  if (params.stream != null) result.stream = params.stream;
+
+  return result;
+}
+
+function parametersFromMistral(params: MistralParameters): CohereParameters {
+  const result: CohereParameters = {};
+  if (params.max_tokens != null) result.max_tokens = params.max_tokens;
+  if (params.temperature != null)
+    result.temperature = Math.max(0, Math.min(params.temperature * 5, 5));
+  if (params.top_p != null) {
+    result.p = params.top_p;
+    if (params.top_p === 0) result.p = 0.00000000001;
+    if (params.top_p === 1) result.p = 0.99999999999;
+  }
   if (params.stream != null) result.stream = params.stream;
 
   return result;
